@@ -61,12 +61,16 @@ Downsampled matrix with the first column being the time index and other columns 
 }
 \description{
 Make sure start_note it set correct!
+Pre-processes the data and then estimates dFF using a baseline calculate on the data until intervention. If you want to calculate on all data provide start_note = "stop" .
 }
 \details{
-Pre-processes the data and then estimates dFF using a baseline calculate on the data until intervention. If you want to calculate on all data provide start_note = "stop" .
+Details on dFF:
 dFF = (signal - signalBase) / signalBase
 Currently there are three approaches:
+
 median: Take the median of the baseline and use as signalBase
+
 fit: Apply linear fit with lm according to Lerner et al. This approach ignores the intervention time point.
+
 decay: Fit a negative exponential decay to estimate baseline and then use the extrapolated data as signalBase. If model fit fails it falls back to median.
 }

@@ -197,7 +197,7 @@ fit_decay_power = function(data,smooth_with_butter = TRUE,pct_fallback = 0.2,b_v
     reference_data = as.numeric(stats::fitted(fitted_model))
     if(stats::coef(fitted_model)['b'] < 0 & ntry < 10){
       if(verbose >=2){message("Retrying model with elongated data using the minimum of baseline")}
-      fitted_model = fit_decay_power(c(data_forfit$y,rep(min(data_forfit$y),pct_fallback*length(data_forfit$y))),smooth_with_butter = F,pct_fallback = pct_fallback+0.1,b_val = b_val,verbose=1,ntry=ntry+1)$fit_model
+      fitted_model = fit_decay_power(c(data_forfit$y,rep(min(data_forfit$y),pct_fallback*length(data_forfit$y))),smooth_with_butter = F,pct_fallback = pct_fallback+0.1,b_val = b_val,verbose=verbose,ntry=ntry+1)$fit_model
     }
     if(verbose >=2){message("Estimated coeffiecients: ")}
     if(verbose >=2){message(paste0(stats::coef(fitted_model),collapse = " | "))}

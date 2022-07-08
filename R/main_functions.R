@@ -101,13 +101,18 @@ import_fibeR = function(input_path, sample_id = NULL,id_infererence="pathname", 
 #' Process a fibeR sample
 #'
 #' Make sure start_note it set correct!
-#'
 #' Pre-processes the data and then estimates dFF using a baseline calculate on the data until intervention. If you want to calculate on all data provide start_note = "stop" .
+#'
+#' Details on dFF:
 #' dFF = (signal - signalBase) / signalBase
 #' Currently there are three approaches:
+#'
 #' median: Take the median of the baseline and use as signalBase
+#'
 #' fit: Apply linear fit with lm according to Lerner et al. This approach ignores the intervention time point.
+#'
 #' decay: Fit a negative exponential decay to estimate baseline and then use the extrapolated data as signalBase. If model fit fails it falls back to median.
+#'
 #'
 #' @param fibeR_input matrix or dataframe OR a list. If list has to have the standard fibeR format
 #' @param name_signal character string with the name of the signal column in fibeR_input. Defaults to the MPI standard: 'x465A'
@@ -153,6 +158,7 @@ process_fibeR = function(fibeR_input,name_signal = "x465A",name_control = "x405A
       class(fibeR_input) <- "fibeR_data"
     }
   }
+  if(verbose){message("Processing fibeR_input...")}
 
   # check $raw.data
   if(is.null(fibeR_input$raw.data)){stop("raw.data is NULL.")}
@@ -211,7 +217,8 @@ process_fibeR = function(fibeR_input,name_signal = "x465A",name_control = "x405A
   # distinct rounded second
   if(reduce_for_comparability){
     n_occ = table(process.data$time_from_intervention)
-    if(verbose){message("Removing ",length(n_occ[n_occ >= 2])," data points to reduce the data to one point per (rounded) second. This allows for easy comparison other samples. Set reduce_for_comparability to FALSE to disable this behavior.")}
+    #  This allows for easy comparison other samples.
+    if(verbose){message("Removing ",length(n_occ[n_occ >= 2])," data points to reduce the data to one point per (rounded) second. Set reduce_for_comparability to FALSE to disable this behavior.")}
     process.data = process.data %>% dplyr::distinct(time_from_intervention,.keep_all = TRUE) %>% as.data.frame()
   }
 
@@ -251,7 +258,8 @@ process_fibeR = function(fibeR_input,name_signal = "x465A",name_control = "x405A
   baseline.data$median_control = median_control_baseline
 
   # use  median
-  if(dff_method == "median"){
+  if("median" %in% dff_method ){
+    if(verbose){message("dFF: Estimate median")}
     # calculate relative dFF with median
     signal_relative_median = (process.data[,name_signal]-median_signal_baseline)/median_signal_baseline
     control_relative_median = (process.data[,name_control]-median_control_baseline)/median_control_baseline
@@ -263,8 +271,8 @@ process_fibeR = function(fibeR_input,name_signal = "x465A",name_control = "x405A
   }
 
   # lerner et al fit
-  if(dff_method == "fit"){
-
+  if( "fit" %in% dff_method){
+    if(verbose){message("dFF: Fitting control to signal")}
     # fit data
     lm_fitted=stats::lm(process.data[,name_signal] ~ process.data[,name_control])
     control_fit_all = lm_fitted$coefficients[2]*process.data[,name_control] + lm_fitted$coefficients[1]
@@ -275,16 +283,16 @@ process_fibeR = function(fibeR_input,name_signal = "x465A",name_control = "x405A
   }
 
   # fit a power like model to estimate bleaching with an 'exponential decay' and use that as baseline for dFF
-  if(dff_method == "decay"){
-
+  if("decay" %in% dff_method){
+    if(verbose){message("dFF: Estimate exponetial decay")}
     ## get the decay baseline for signal dFF:
     decay_power_model_signal=fit_decay_power(process.data[process.data$time_from_intervention < 0, name_signal],
                                              smooth_with_butter=TRUE,
                                              b_val = 10,
-                                             verbose = verbose,
+                                             verbose = 0,
                                              pct_fallback = 0.3)$fit_model
     if(length(decay_power_model_signal)>0){
-      predicted_signal_baseline_power = as.numeric(stats::predict(decay_power_model_signal$fit_model,
+      predicted_signal_baseline_power = as.numeric(stats::predict(decay_power_model_signal,
                                                            newdata=data.frame(x=process.data$time_from_intervention-min(process.data$time_from_intervention))))
     }else{
       # if model failed: use median
@@ -297,10 +305,10 @@ process_fibeR = function(fibeR_input,name_signal = "x465A",name_control = "x405A
     decay_power_model_control =fit_decay_power(process.data[process.data$time_from_intervention < 0, name_control],
                                                smooth_with_butter=TRUE,
                                                b_val = 10,
-                                               verbose = verbose,
+                                               verbose = 0,
                                                pct_fallback = 0.3)$fit_model
     if(length(decay_power_model_control)>0){
-      if(predicted_signal_baseline_power == median_signal_baseline){
+      if(length(predicted_signal_baseline_power)==1){
         predicted_control_baseline_power = median_control_baseline # if signal failed, also use median here
       }else{
         predicted_control_baseline_power = as.numeric(stats::predict(decay_power_model_control,
@@ -331,6 +339,7 @@ process_fibeR = function(fibeR_input,name_signal = "x465A",name_control = "x405A
   fibeR_input$process.data = process.data
   fibeR_input$baseline.data = baseline.data
 
+  if(verbose){message("Processing complete.")}
   # return
   return(fibeR_input)
 
