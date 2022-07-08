@@ -75,7 +75,7 @@ import_fibeR = function(input_path, sample_id = NULL,id_infererence="pathname", 
   fibeR_sample = list(
     id = sample_id,
     raw.data = raw.data,
-    processed.data = NULL,
+    process.data = NULL,
     notes = notes
   )
   class(fibeR_sample) <- "fibeR_data"
@@ -88,11 +88,72 @@ import_fibeR = function(input_path, sample_id = NULL,id_infererence="pathname", 
 ### load_fibeR
 ##########
 
-# load_fibeR = function(input_path, sample_id = NULL){
-#
-#
-# }
+#' Save an object of class fibeR_data
+#'
+#' Saves data.frame from a list-like fibeR_data to individual .txt tables on output_path.
+#'
+#' @param id character string with id
+#' @param input_path path
+#'
+#' @export
+#'
+#' @importFrom utils read.table
+#'
 
+
+load_fibeR = function(id,input_path){
+
+  all_files = list.files(path = input_path,pattern = id,recursive = TRUE,full.names = TRUE)
+  all_files = all_files[grepl("\\.notes|raw|baseline|process\\.",all_files)]
+  if(length(all_files) == 0){
+    stop("Cannot find files with correct id in input_path.")
+  }
+  print(all_files)
+  # init
+  fibeR_input = list(
+    id = id
+  )
+  #read
+  for(i in 1:length(all_files)){
+    slot_name = sub(".","",gsub("/","",gsub(".txt","",gsub(id,"",gsub(input_path,"",all_files[i])))))
+    print(gsub("//","/",all_files[i] ))
+    table1 = utils::read.table(file = gsub("//","/",all_files[i] ),header = TRUE)
+    fibeR_input[[slot_name]] = table1
+  }
+  class(fibeR_input) <- "fibeR_data"
+  return(fibeR_input)
+}
+
+##########
+### save_fibeR
+##########
+
+#' Save an object of class fibeR_data
+#'
+#' Saves data.frame from a list-like fibeR_data to individual .txt tables on output_path.
+#'
+#' @param fibeR_data object of class fibeR_data
+#' @param output_path path
+#'
+#' @export
+#'
+#' @importFrom utils write.table
+#'
+#'
+
+save_fibeR = function(fibeR_data, output_path){
+  if(!is(fibeR_data,"fibeR_data")){
+    stop("Please provide a valid fibeR_data to save with this function.")
+  }
+  output_path = gsub("//","/",paste0(output_path,"/"))
+  file_name_prefix = paste0(output_path,fibeR_data$id)
+  parts_to_write = names(which(sapply(fibeR_data,is.data.frame)))
+  for(i in 1:length(parts_to_write)){
+    df_to_write = parts_to_write[i]
+    file_name = paste0(file_name_prefix,".",df_to_write,".txt")
+    utils::write.table(fibeR_data[[df_to_write]],file = file_name,sep = "\t",row.names = FALSE,col.names = TRUE,quote = FALSE)
+  }
+}
 
 ##########
 ### process_fibeR
@@ -152,7 +213,7 @@ process_fibeR = function(fibeR_input,name_signal = "x465A",name_control = "x405A
       fibeR_input = list(
         id = "sample",
         raw.data = fibeR_input,
-        processed.data = NULL,
+        process.data = NULL,
         notes = data.frame()
       )
       class(fibeR_input) <- "fibeR_data"
@@ -293,7 +354,7 @@ process_fibeR = function(fibeR_input,name_signal = "x465A",name_control = "x405A
                                              pct_fallback = 0.3)$fit_model
     if(length(decay_power_model_signal)>0){
       predicted_signal_baseline_power = as.numeric(stats::predict(decay_power_model_signal,
-                                                           newdata=data.frame(x=process.data$time_from_intervention-min(process.data$time_from_intervention))))
+                                                                  newdata=data.frame(x=process.data$time_from_intervention-min(process.data$time_from_intervention))))
     }else{
       # if model failed: use median
       predicted_signal_baseline_power = median_signal_baseline
@@ -312,7 +373,7 @@ process_fibeR = function(fibeR_input,name_signal = "x465A",name_control = "x405A
         predicted_control_baseline_power = median_control_baseline # if signal failed, also use median here
       }else{
         predicted_control_baseline_power = as.numeric(stats::predict(decay_power_model_control,
-                                                              newdata=data.frame(x=process.data$time_from_intervention-min(process.data$time_from_intervention))))
+                                                                     newdata=data.frame(x=process.data$time_from_intervention-min(process.data$time_from_intervention))))
       }
     }else{
       # if model failed: use median
