@@ -1,10 +1,5 @@
 
-
-
-
-
-
-# function that exctracts from Matlab
+# Functions to export binary results to flat files that can be imported in R.
 
 #' Extract fiber photometry from binary files using the TDT Matlab SDK
 #'
@@ -30,16 +25,17 @@
 export_tdt = function(path, id,return_cached = TRUE, outputpath = tempdir(),matlab_path = "/beegfs/bin/matlab_2014b", export_full = FALSE,downsample_freq = 1000,channel_names = c("x465A","x405A"),verbose =TRUE){
 
   # Check input:
-  if(export_full & outputpath == tempdir()){stop("Error in export_tdt: Please specifiy a permanent outputpath when exporting the full data from Matlab!")}
-  if(!base::dir.exists(outputpath)){stop("Error in export_tdt: Cannot find outputpath!")}
-  if(!base::dir.exists(path)){stop("Error in export_tdt: Cannot find path (input data)!")}
-  if(length(base::list.files(path = path,pattern = ".Tbk"))<1){stop("Error in export_tdt: Cannot find .Tbk file in path!")}
-  if(!file.exists(matlab_path)){stop("Error in export_tdt: Cannot find file in specified matlab path!")}
+  if(export_full & outputpath == tempdir()){stop("Please specifiy a permanent outputpath when exporting the full data from Matlab!")}
+  if(!base::dir.exists(outputpath)){stop("Cannot find outputpath!")}
+  if(!base::dir.exists(path)){stop("Cannot find path (input data)!")}
+  if(length(base::list.files(path = path,pattern = ".Tbk"))<1){stop("Cannot find .Tbk file in path!")}
 
   # tdt_lib_path
   tdt_lib_path = system.file("SDK", package = "fibeR")#"inst/SDK/"
+  #tdt_lib_path = "/beegfs/scratch/bruening_scratch/lsteuernagel/projects/fibeR/inst/SDK"
   # matlab_fun_path
   matlab_fun_path = system.file("Matlab", package = "fibeR")#"inst/SDK/"
+  #matlab_fun_path = "/beegfs/scratch/bruening_scratch/lsteuernagel/projects/fibeR/inst/Matlab/"
   # define outputpath for Matlab with id
   outputpath = gsub("//","/",paste0(outputpath,"/"))
   # paste channel names in correct format
@@ -51,9 +47,13 @@ export_tdt = function(path, id,return_cached = TRUE, outputpath = tempdir(),matl
   if(return_cached & file.exists(outputfile)){
     if(verbose){message("export_tdt: Found existing export file for this id in outputpath. Not running Matlab. Set return_cached to FALSE to overwrite this behavior.")}
   }else{
+    if(!file.exists(matlab_path)){stop("Cannot find file in specified matlab path!")}
+    if(!base::dir.exists(tdt_lib_path)){stop("Cannot find SDK path (should be included in package)!")}
+
     if(verbose){message("export_tdt: Running Matlab tdt export ... ")}
     # run Matlab
     if(export_full){matlab_fun = "tdt_export"}else{matlab_fun ="tdt_export_small"}
+    #define command:
     command = as.character(paste0(matlab_path,
                                   " -nodisplay -nojvm -r \"cd '",matlab_fun_path,"/'; try ",matlab_fun,"('",
                                   paste0(path),"','",
@@ -63,15 +63,90 @@ export_tdt = function(path, id,return_cached = TRUE, outputpath = tempdir(),matl
                                   channels_matlab,",",
                                   downsample_freq,"); catch; end; quit\""))
     output = system(command,intern = TRUE)
-    if(verbose){message("complete")}
+    if(grepl(pattern = "read from",x = output[12])){
+      if(verbose){message("Completed export: ", output[12])}
+    }else{
+      if(verbose){message("Warning: Matlab export potentially failed!")}
+    }
   }
   return(outputfile)
 
 }
 
 
+#' Parses lines from Notes.txt
+#'
+#' Parse notes file
+#'
+#' @param lines_from_notes Character Vector of readLines output
+#' @param expected_id String. The expected id of the animal
+#' @param verbose whether to print messages
+#' @return data.frame with formatted note information
+#'
+#' @export
+#'
+#' @import stringr
+#'
 
+parseNotes = function(lines_from_notes,expected_id="",verbose=TRUE){
+  if(expected_id != gsub("Subject: ","",lines_from_notes[grepl("Subject",lines_from_notes)])){
+    if(verbose){message("Warning: Id in notes differs from expected id")}
+  }
+  # extract start and stop time and convert to date
+  start_time = gsub("Start: ","",stringr::str_extract(lines_from_notes[grepl("Start:",lines_from_notes)], "Start: [0-9]*:[0-9]*:[0-9]*[a-z]+ [0-9]*/[0-9]*/[0-9]*"))
+  start_time = as.POSIXlt(start_time,format="%I:%M:%S%p %m/%d/%Y")
+  stop_time = gsub("Stop: ","",stringr::str_extract(lines_from_notes[grepl("Stop:",lines_from_notes)], "Stop: [0-9]*:[0-9]*:[0-9]*[a-z]+ [0-9]*/[0-9]*/[0-9]*"))
+  stop_time = as.POSIXlt(stop_time,format="%I:%M:%S%p %m/%d/%Y")
+  date = format(start_time, "%m-%d-%Y")
 
+  # extract note times and convert to date, then set to date (day and month) of start
+  note_times = gsub("Note-[0-9]*: ","",stringr::str_extract(lines_from_notes[grepl("Note-[0-9]*:",lines_from_notes)], "Note-[0-9]*: [0-9]*:[0-9]*:[0-9]*[a-z]+"))
+  note_times = as.POSIXlt(note_times,format="%I:%M:%S%p")
+  note_times = as.POSIXct(base::sub("\\S+", as.character(date), as.character(note_times)),format="%m-%d-%Y %H:%M:%S")
+
+  # extract not text
+  note_texts = gsub("Note-[0-9]*: [0-9]*:[0-9]*:[0-9]*[a-z]+ ","",stringr::str_extract(lines_from_notes[grepl("Note-[0-9]*: [0-9]*:[0-9]*:[0-9]*",lines_from_notes)], "Note-[0-9]*: [0-9]*:[0-9]*:[0-9]*.*"))
+  note_texts = gsub("\"","",note_texts)
+
+  note_df = data.frame(note_id = 1:(length(note_texts)+2), note_date = c(start_time,note_times,stop_time), text = c("start",note_texts,"stop"))
+  note_df$note_time = as.numeric(note_df$note_date - note_df$note_date[1])
+
+  return(note_df)
+}
+
+#' Parses lines from Notes.txt
+#'
+#' Parse notes file
+#'
+#' @param path The full paths to the binary files
+#' @param id The id that will be used to name the export file. Typically should be also in the input file name but does not have to !
+#' @param outputpath Where to store the data. Defaults to temp dir of session
+#' @param verbose whether to print messages
+#' @return filename of notes file as character string
+#'
+#' @export
+#'
+#' @importFrom utils write.table
+#'
+#'
+
+export_Notes = function(path,id, outputpath = tempdir(),verbose=TRUE){
+
+  if(!base::dir.exists(outputpath)){stop("Cannot find outputpath!")}
+  if(!base::dir.exists(path)){stop("Cannot find path (input data)!")}
+  path = gsub("//","/",paste0(path,"/"))
+  # notes
+  if(file.exists(paste0(c(path,"Notes.txt"),collapse = ""))){
+    if(verbose){message(paste0("export_Notes: Exporting notes "))}
+    lines_from_notes=readLines(paste0(c(path,"Notes.txt"),collapse = ""))
+    notes_parsed = parseNotes(lines_from_notes,id)
+    notes_out_file =  paste0(c(outputpath,id,"_notes_parsed.txt"),collapse = "")
+    utils::write.table(notes_parsed,file = notes_out_file,sep="\t",quote=FALSE,row.names = FALSE)
+  }else{
+    stop("Cannot find notes file in path.")
+  }
+  return(notes_out_file)
+}
 
 # find_matlab = function(dir = "/beegfs/bin/"){
 #
@@ -85,6 +160,9 @@ export_tdt = function(path, id,return_cached = TRUE, outputpath = tempdir(),matl
 #   return(matlab_path)
 # }
 
-
+# import_tdt_R = function(filename){
+#
+#
+# }
 
 
