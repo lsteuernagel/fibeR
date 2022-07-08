@@ -17,13 +17,17 @@ reduce_fiberdata(
 \arguments{
 \item{input_data}{data with time and raw signal/control channels}
 
+\item{name_c1}{column name for channel 1 (signal) in input_data}
+
+\item{name_c2}{column name for channel 2 (control) in input_data}
+
+\item{max_value_c1}{Single Value. Extend vector at both ends by this length to get good filtering results. Should be large compared to vector length. Check by plotting the filtered result.}
+
+\item{max_value_c2}{Single Value. Critical frequencies of the filter from signal::butter.}
+
 \item{additional_cut_length}{Single Value. Filter order of the filter from signal::butter. Defaults to 2.}
 
 \item{index_column}{Character. column in input_data. Defaults to 'time_from_intervention_int'}
-
-\item{max_value_signal}{Single Value. Extend vector at both ends by this length to get good filtering results. Should be large compared to vector length. Check by plotting the filtered result.}
-
-\item{max_value_control}{Single Value. Critical frequencies of the filter from signal::butter.}
 }
 \value{
 Numeric vector of the filtered signal.

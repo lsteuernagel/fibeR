@@ -74,8 +74,10 @@ butter_filter = function(input, extend_butter=5000,w_butter = (1/50), order_butt
 #' Remove time intervals when laser was off
 #'
 #' @param input_data data with time and raw signal/control channels
-#' @param max_value_signal Single Value. Extend vector at both ends by this length to get good filtering results. Should be large compared to vector length. Check by plotting the filtered result.
-#' @param max_value_control Single Value. Critical frequencies of the filter from signal::butter.
+#' @param name_c1 column name for channel 1 (signal) in input_data
+#' @param name_c2 column name for channel 2 (control) in input_data
+#' @param max_value_c1 Single Value. Extend vector at both ends by this length to get good filtering results. Should be large compared to vector length. Check by plotting the filtered result.
+#' @param max_value_c2 Single Value. Critical frequencies of the filter from signal::butter.
 #' @param additional_cut_length Single Value. Filter order of the filter from signal::butter. Defaults to 2.
 #' @param index_column Character. column in input_data. Defaults to 'time_from_intervention_int'
 #' @return Numeric vector of the filtered signal.
@@ -134,7 +136,7 @@ reduce_fiberdata = function(input_data, name_c1 , name_c2 , max_value_c1=10,max_
 #' @export
 #'
 #' @importFrom stats nls formula fitted coef
-#' @importFrom graphics plot lines
+#' @importFrom graphics plot lines points
 #'
 
 fit_decay_power = function(data,smooth_with_butter = TRUE,pct_fallback = 0.2,b_val = 0.5,ntry=0,verbose=0){
@@ -177,7 +179,7 @@ fit_decay_power = function(data,smooth_with_butter = TRUE,pct_fallback = 0.2,b_v
       min_last =  min((data_forfit$y[max(1,floor(length(data_forfit$x)*(1-pct_fallback))):length(data_forfit$x)]))
       if(verbose >=2){message("using minlst: ",which(data_forfit$y==min_last)," ",min_last)}
       # add points to plot
-      if(verbose >=3){message(points(x=c(which(data_forfit$y==max_first),which(data_forfit$y==min_last)),y=c(max_first,min_last),col="red",pch=21))}
+      if(verbose >=3){print(graphics::points(x=c(which(data_forfit$y==max_first),which(data_forfit$y==min_last)),y=c(max_first,min_last),col="red",pch=21))}
       # cut down data
       data_forfit = data_forfit[1:which(data_forfit$y==min_last),]
       data_forfit = data_forfit[which(data_forfit$y==max_first):nrow(data_forfit),]

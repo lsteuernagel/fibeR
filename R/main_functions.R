@@ -148,7 +148,7 @@ process_fibeR = function(fibeR_input,name_signal = "x465A",name_control = "x405A
         id = "sample",
         raw.data = fibeR_input,
         processed.data = NULL,
-        notes = NULL
+        notes = data.frame()
       )
       class(fibeR_input) <- "fibeR_data"
     }
@@ -167,7 +167,7 @@ process_fibeR = function(fibeR_input,name_signal = "x465A",name_control = "x405A
   }
   # downsample
   if(downsample_data){
-    raw.data = downsample(raw.data,k=k_downsample)
+    raw.data = downsample(raw.data,k=downsample_k)
     raw.data = as.data.frame(raw.data)
   }
   # delete cutoff_end from the end
@@ -178,7 +178,7 @@ process_fibeR = function(fibeR_input,name_signal = "x465A",name_control = "x405A
   rownames(notes) = notes$text
   # check if start node can be found
   if(nrow(notes)<=2){
-    if(verbose){message("Notes only contain start and end time. Using intervention_second_fallback.")}
+    if(verbose){message("Notes are empty or only contain start and end time. Using intervention_second_fallback.")}
     start_time_seconds = intervention_second_fallback
   }
   if(is.numeric(start_note)){
@@ -228,8 +228,8 @@ process_fibeR = function(fibeR_input,name_signal = "x465A",name_control = "x405A
     process.data = reduce_fiberdata(process.data,
                                     name_c1 = name_signal,
                                     name_c2 = name_control,
-                                    max_value_signal= max(process.data[,name_signal])*0.05,
-                                    max_value_control= max(process.data[,name_control])*0.05,
+                                    max_value_c1 = max(process.data[,name_signal])*0.05,
+                                    max_value_c2 = max(process.data[,name_control])*0.05,
                                     additional_cut_length=additional_cut_length,
                                     index_column = "time_from_intervention")
     if(verbose){message(paste0("Removed: ",length_before-nrow(process.data)," values where laser was off."))}
