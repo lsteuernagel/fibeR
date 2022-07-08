@@ -1,6 +1,10 @@
 
 # Functions to export binary results to flat files that can be imported in R.
 
+##########
+### export_tdt
+##########
+
 #' Extract fiber photometry from binary files using the TDT Matlab SDK
 #'
 #' Runs Matlab functions to export either all or downsampled data from the binary TDT files.
@@ -73,6 +77,9 @@ export_tdt = function(path, id,return_cached = TRUE, outputpath = tempdir(),matl
 
 }
 
+##########
+### parseNotes
+##########
 
 #' Parses lines from Notes.txt
 #'
@@ -114,9 +121,14 @@ parseNotes = function(lines_from_notes,expected_id="",verbose=TRUE){
   return(note_df)
 }
 
-#' Parses lines from Notes.txt
+
+##########
+### export_Notes
+##########
+
+#' Export Notes file to table formatted .txt file.
 #'
-#' Parse notes file
+#' Wrapper around parseNotes
 #'
 #' @param path The full paths to the binary files
 #' @param id The id that will be used to name the export file. Typically should be also in the input file name but does not have to !
@@ -147,6 +159,10 @@ export_Notes = function(path,id, outputpath = tempdir(),verbose=TRUE){
   }
   return(notes_out_file)
 }
+
+##########
+###
+##########
 
 # find_matlab = function(dir = "/beegfs/bin/"){
 #

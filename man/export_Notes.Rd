@@ -2,7 +2,7 @@
 % Please edit documentation in R/export_functions.R
 \name{export_Notes}
 \alias{export_Notes}
-\title{Parses lines from Notes.txt}
+\title{Export Notes file to table formatted .txt file.}
 \usage{
 export_Notes(path, id, outputpath = tempdir(), verbose = TRUE)
 }
@@ -19,5 +19,5 @@ export_Notes(path, id, outputpath = tempdir(), verbose = TRUE)
 filename of notes file as character string
 }
 \description{
-Parse notes file
+Wrapper around parseNotes
 }
