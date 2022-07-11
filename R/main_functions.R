@@ -2,6 +2,10 @@
 
 # Functions to export binary results to flat files that can be imported in R.
 
+#TODO:
+# batch loading
+# batch processing!
+
 ##########
 ### import_fibeR
 ##########
