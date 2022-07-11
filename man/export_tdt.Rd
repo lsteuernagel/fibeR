@@ -13,6 +13,8 @@ export_tdt(
   export_full = FALSE,
   downsample_freq = 1000,
   channel_names = c("x465A", "x405A"),
+  tdt_lib_path = NULL,
+  matlab_fun_path = NULL,
   verbose = TRUE
 )
 }
@@ -32,6 +34,10 @@ export_tdt(
 \item{downsample_freq}{downsample in matlab by taking the mean over downsample_freq data points}
 
 \item{channel_names}{the channel names in the TDT binary files (required by Matlab function). Default to "x465A","x405A"}
+
+\item{tdt_lib_path}{only for debugging and custom usage. Defaults to NULL (use package system path).}
+
+\item{matlab_fun_path}{only for debugging and custom usage. Defaults to NULL (use package system path).}
 
 \item{verbose}{whether to print messages}
 }

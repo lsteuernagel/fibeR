@@ -5,7 +5,7 @@ Authors@R:
     person("Lukas", "Steuernagel", , "first.last@example.com", role = c("aut", "cre"))
 Description: Fiber photometry processing and analysis with R
 License: MIT + file LICENSE
-Imports: methods, stats, rlang, stringr, magrittr, dplyr, tidyr, signal, ggplot2
+Imports: methods, stats, rlang, stringr, magrittr, dplyr, tidyr, signal, data.table, ggplot2
 Suggests: 
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

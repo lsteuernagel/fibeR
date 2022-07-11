@@ -18,14 +18,14 @@
 #' TODO: If you have previously processed data with fibeR and saved the results you can alternatively use the function load_fibeR to skip Matlab export/import.
 #'
 #' @param input_path The full path to the binary files from TDT.
-#' @param sample_id The id that will be used. Defaults to NULL which will use the name of the .Tbk file in the specified 'path'
+#' @param sample_id The id that will be used. Defaults to NULL which will infer the id (see id_infererence).
 #' @param id_infererence Only used if sample_id is NULL. Then 'pathname' will use the lowest level of path as id (default). 'tbkfile' will use the name of the tbk file in path as id. Anything else will assign a random number as id.
 #' @inheritParams export_tdt
 #' @return the imported data of the sample
 #'
 #' @export
 #'
-#' @importFrom utils read.table
+#' @importFrom data.table fread
 #'
 #'
 
@@ -71,9 +71,9 @@ import_fibeR = function(input_path, sample_id = NULL,id_infererence="pathname", 
                                       outputpath = outputpath,
                                       verbose=verbose)
   # import results into R
-  raw.data = utils::read.table(export_tdt_result_file,header = FALSE)
+  raw.data = data.table::fread(export_tdt_result_file,header = FALSE,data.table = FALSE)
   colnames(raw.data) = c("time",channel_names)
-  notes = utils::read.table(export_tdt_note_file,header = TRUE)
+  notes = data.table::fread(export_tdt_note_file,header = TRUE,data.table = FALSE)
 
   # make result list
   fibeR_sample = list(
@@ -101,7 +101,7 @@ import_fibeR = function(input_path, sample_id = NULL,id_infererence="pathname", 
 #'
 #' @export
 #'
-#' @importFrom utils read.table
+#' @importFrom data.table fread
 #'
 
 
@@ -112,7 +112,7 @@ load_fibeR = function(id,input_path){
   if(length(all_files) == 0){
     stop("Cannot find files with correct id in input_path.")
   }
-  print(all_files)
+  #print(all_files)
   # init
   fibeR_input = list(
     id = id
@@ -120,8 +120,8 @@ load_fibeR = function(id,input_path){
   #read
   for(i in 1:length(all_files)){
     slot_name = sub(".","",gsub("/","",gsub(".txt","",gsub(id,"",gsub(input_path,"",all_files[i])))))
-    print(gsub("//","/",all_files[i] ))
-    table1 = utils::read.table(file = gsub("//","/",all_files[i] ),header = TRUE)
+    #print(gsub("//","/",all_files[i] ))
+    table1 = data.table::fread(file = gsub("//","/",all_files[i] ),header = TRUE)
     fibeR_input[[slot_name]] = table1
   }
   class(fibeR_input) <- "fibeR_data"
@@ -141,7 +141,7 @@ load_fibeR = function(id,input_path){
 #'
 #' @export
 #'
-#' @importFrom utils write.table
+#' @importFrom data.table fwrite
 #'
 #'
 
@@ -155,7 +155,7 @@ save_fibeR = function(fibeR_data, output_path){
   for(i in 1:length(parts_to_write)){
     df_to_write = parts_to_write[i]
     file_name = paste0(file_name_prefix,".",df_to_write,".txt")
-    utils::write.table(fibeR_data[[df_to_write]],file = file_name,sep = "\t",row.names = FALSE,col.names = TRUE,quote = FALSE)
+    data.table::fwrite(fibeR_data[[df_to_write]],file = file_name,sep = "\t")
   }
 }
 

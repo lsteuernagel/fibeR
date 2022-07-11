@@ -18,6 +18,8 @@
 #' @param export_full Defaults to FALSE: Will downsample in matlab by taking the mean over downsample_freq data points. If TRUE: export every data point. This is much slower, because a much bigger files has to be written to disk from Matlab.
 #' @param downsample_freq downsample in matlab by taking the mean over downsample_freq data points
 #' @param channel_names the channel names in the TDT binary files (required by Matlab function). Default to "x465A","x405A"
+#' @param tdt_lib_path only for debugging and custom usage. Defaults to NULL (use package system path).
+#' @param matlab_fun_path only for debugging and custom usage. Defaults to NULL (use package system path).
 #' @param verbose whether to print messages
 #'
 #' @return the file name of the exported data as a character string
@@ -26,7 +28,7 @@
 #'
 #'
 
-export_tdt = function(path, id,return_cached = TRUE, outputpath = tempdir(),matlab_path = "/beegfs/bin/matlab_2014b", export_full = FALSE,downsample_freq = 1000,channel_names = c("x465A","x405A"),verbose =TRUE){
+export_tdt = function(path, id,return_cached = TRUE, outputpath = tempdir(),matlab_path = "/beegfs/bin/matlab_2014b" ,export_full = FALSE,downsample_freq = 1000,channel_names = c("x465A","x405A"),tdt_lib_path = NULL,matlab_fun_path =NULL,verbose =TRUE){
 
   # Check input:
   if(export_full & outputpath == tempdir()){stop("Please specifiy a permanent outputpath when exporting the full data from Matlab!")}
@@ -35,11 +37,20 @@ export_tdt = function(path, id,return_cached = TRUE, outputpath = tempdir(),matl
   if(length(base::list.files(path = path,pattern = ".Tbk"))<1){stop("Cannot find .Tbk file in path!")}
 
   # tdt_lib_path
-  tdt_lib_path = system.file("SDK", package = "fibeR")#"inst/SDK/"
-  #tdt_lib_path = "/beegfs/scratch/bruening_scratch/lsteuernagel/projects/fibeR/inst/SDK"
+  if(is.null(tdt_lib_path)){
+    #tdt_lib_path = "/beegfs/scratch/bruening_scratch/lsteuernagel/projects/fibeR/inst/SDK"
+    tdt_lib_path = system.file("SDK", package = "fibeR")#"inst/SDK/"
+  }else{
+    if(!base::dir.exists(tdt_lib_path)){stop("Cannot find TDT SDK path! Provide NULL to use the version included in the package.")}
+  }
   # matlab_fun_path
-  matlab_fun_path = system.file("Matlab", package = "fibeR")#"inst/SDK/"
-  #matlab_fun_path = "/beegfs/scratch/bruening_scratch/lsteuernagel/projects/fibeR/inst/Matlab/"
+  if(is.null(matlab_fun_path)){
+    #matlab_fun_path = "/beegfs/scratch/bruening_scratch/lsteuernagel/projects/fibeR/inst/Matlab/"
+    matlab_fun_path = system.file("Matlab", package = "fibeR")#"inst/SDK/"
+  }else{
+    if(!base::dir.exists(matlab_fun_path)){stop("Cannot find Matlab functions.")}
+  }
+
   # define outputpath for Matlab with id
   outputpath = gsub("//","/",paste0(outputpath,"/"))
   # paste channel names in correct format
@@ -138,7 +149,8 @@ parseNotes = function(lines_from_notes,expected_id="",verbose=TRUE){
 #'
 #' @export
 #'
-#' @importFrom utils write.table
+#' @importFrom data.table fwrite
+#'
 #'
 #'
 
@@ -151,9 +163,9 @@ export_Notes = function(path,id, outputpath = tempdir(),verbose=TRUE){
   if(file.exists(paste0(c(path,"Notes.txt"),collapse = ""))){
     if(verbose){message(paste0("export_Notes: Exporting notes "))}
     lines_from_notes=readLines(paste0(c(path,"Notes.txt"),collapse = ""))
-    notes_parsed = parseNotes(lines_from_notes,id)
+    notes_parsed = parseNotes(lines_from_notes,id,verbose=verbose)
     notes_out_file =  paste0(c(outputpath,id,"_notes_parsed.txt"),collapse = "")
-    utils::write.table(notes_parsed,file = notes_out_file,sep="\t",quote=FALSE,row.names = FALSE)
+    data.table::fwrite(notes_parsed,file = notes_out_file,sep="\t")
   }else{
     stop("Cannot find notes file in path.")
   }

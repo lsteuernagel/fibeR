@@ -19,7 +19,7 @@ import_fibeR(
 \arguments{
 \item{input_path}{The full path to the binary files from TDT.}
 
-\item{sample_id}{The id that will be used. Defaults to NULL which will use the name of the .Tbk file in the specified 'path'}
+\item{sample_id}{The id that will be used. Defaults to NULL which will infer the id (see id_infererence).}
 
 \item{id_infererence}{Only used if sample_id is NULL. Then 'pathname' will use the lowest level of path as id (default). 'tbkfile' will use the name of the tbk file in path as id. Anything else will assign a random number as id.}
 
