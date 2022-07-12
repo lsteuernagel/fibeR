@@ -7,7 +7,7 @@
 plot_aligned_fibeR(
   aligned_fibeR,
   summary_stat = FALSE,
-  summary_color = "#0072B2",
+  summary_color = "#009E73",
   yaxis_label = "dFF",
   linesize = 0.3,
   min_yaxis_dFF = 0.2,
@@ -17,7 +17,7 @@ plot_aligned_fibeR(
 )
 }
 \arguments{
-\item{aligned_fibeR}{object of class fibeR_data}
+\item{aligned_fibeR}{dataframe with aligned fiber photometry results and time integers as rownames}
 
 \item{yaxis_label}{label for yaxis}
 

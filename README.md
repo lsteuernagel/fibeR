@@ -48,12 +48,9 @@ skipped).
 ``` r
 batch_sample_path =   "/beegfs/v0/labnet-data/calcium/cbauder/2020_07_09/" # add your own path
 batch_sample_output_path = "/beegfs/scratch/bruening_scratch/lsteuernagel/data/fiberPhotometry/testexport/readme/" # change to your own path on scratch
-fiber_sample_list = import_fibeR_batch(batch_path = batch_sample_path,batch_output_path = batch_sample_output_path)
-#>   |                                                                              |                                                                      |   0%  |                                                                              |==================                                                    |  25%  |                                                                              |===================================                                   |  50%  |                                                                              |====================================================                  |  75%  |                                                                              |======================================================================| 100%
-fiber_sample_list = process_fibeR_batch(fiber_sample_list,start_note_all = 2) # specify the intervention note, typically 2 (1 being the start of recording)
-#>   |                                                                              |                                                                      |   0%  |                                                                              |==================                                                    |  25%  |                                                                              |===================================                                   |  50%  |                                                                              |====================================================                  |  75%  |                                                                              |======================================================================| 100%
-save_fibeR_batch(fiber_sample_list,batch_output_path = batch_sample_output_path) # save processed result to same path
-#>   |                                                                              |                                                                      |   0%  |                                                                              |==================                                                    |  25%  |                                                                              |===================================                                   |  50%  |                                                                              |====================================================                  |  75%  |                                                                              |======================================================================| 100%
+fiber_sample_list = import_fibeR_batch(batch_path = batch_sample_path,batch_output_path = batch_sample_output_path,showProgress = FALSE) # set showProgress = TRUE !
+fiber_sample_list = process_fibeR_batch(fiber_sample_list,start_note_all = 2,showProgress = FALSE) # specify the intervention note, typically 2 (1 being the start of recording)
+save_fibeR_batch(fiber_sample_list,batch_output_path = batch_sample_output_path,showProgress = FALSE) # save processed result to same path
 names(fiber_sample_list) ## access list elements like this : fiber_sample_list[[1]] or fiber_sample_list[["090720BRA0012161-200709-141509"]]
 #> [1] "090720BRA0000517-200709-132227" "090720BRA0010685-200709-161148"
 #> [3] "090720BRA0012142-200709-152204" "090720BRA0012161-200709-141509"
@@ -381,8 +378,10 @@ suppressWarnings(print(plot_aligned_fibeR(aligned_dFF,summary_stat = TRUE))) # c
 TODO: heatmap !
 
 ``` r
-# TODO
+suppressWarnings(suppressMessages(print(plot_heat_aligned_fibeR(aligned_dFF)))) # calling plot_heat_aligned_fibeR(aligned_dFF) is enough
 ```
+
+<img src="man/figures/README-unnamed-chunk-20-1.png" width="100%" />
 
 ### Multiple conditions & List subsetting
 

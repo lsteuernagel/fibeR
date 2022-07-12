@@ -163,7 +163,7 @@ plot_fibeR = function(fibeR_data,datatype = "raw",split_plots = TRUE, datatype_b
 #'
 #' todo: description
 #'
-#' @param aligned_fibeR object of class fibeR_data
+#' @param aligned_fibeR dataframe with aligned fiber photometry results and time integers as rownames
 #' @param yaxis_label label for yaxis
 #' @inheritParams plot_fibeR
 #' @return ggplot object
@@ -174,11 +174,12 @@ plot_fibeR = function(fibeR_data,datatype = "raw",split_plots = TRUE, datatype_b
 #' @importFrom tidyr gather
 #' @importFrom dplyr group_by mutate
 #' @importFrom rlang sym
-#' @importFrom grDevices colorRamp
+#' @importFrom grDevices colorRamp palette.colors
+#' @importFrom stats sd
 #'
 
 
-plot_aligned_fibeR = function(aligned_fibeR,summary_stat = FALSE,summary_color = "#0072B2",yaxis_label = "dFF",linesize = 0.3, min_yaxis_dFF = 0.2,add_hline = TRUE,add_vline = TRUE, text_size_param = 15){
+plot_aligned_fibeR = function(aligned_fibeR,summary_stat = FALSE,summary_color = "#009E73",yaxis_label = "dFF",linesize = 0.3, min_yaxis_dFF = 0.2,add_hline = TRUE,add_vline = TRUE, text_size_param = 15){
 
   # check ncols
 
@@ -191,7 +192,7 @@ plot_aligned_fibeR = function(aligned_fibeR,summary_stat = FALSE,summary_color =
       geom_line(size=linesize)+
       ylim(c(min(-1*min_yaxis_dFF,min(aligned_fibeR_long$value,na.rm = TRUE)*1.1),max(min_yaxis_dFF,max(aligned_fibeR_long$value,na.rm = TRUE)*1.1)))
   }else{
-    aligned_fibeR_long = aligned_fibeR_long %>% dplyr::group_by(time) %>% dplyr::mutate(mean = mean(value), sd = sd(value))
+    aligned_fibeR_long = aligned_fibeR_long %>% dplyr::group_by(time) %>% dplyr::mutate(mean = mean(value), sd = stats::sd(value))
     p1 = ggplot(data = aligned_fibeR_long, aes(x = time, group = sample)) +
       geom_line(aes(y = mean),color= summary_color)+
       geom_ribbon(aes(y = mean, ymin = mean - sd, ymax = mean + sd),fill = summary_color,alpha = 0.2)
@@ -223,50 +224,53 @@ plot_aligned_fibeR = function(aligned_fibeR,summary_stat = FALSE,summary_color =
 
 #' Plot a heatmap of a data.frame that was created with \link[fibeR]{align_fibeR}
 #'
-#' todo: description
+#' Makes a heatmp plot
 #'
-#' @param aligned_fibeR object of class fibeR_data
+#' @param aligned_fibeR dataframe with aligned fiber photometry results and time integers as rownames
+#' @param max_value_heat which value to cap heatmap at. Defaults to 0.2 (20% dFF). Dependinng on the data to plots this should be adjusted.
+#' @param min_time time to start heatmap (before intervention). useful when some samples are much longer than others
+#' @param max_time time to end heatmap
+#' @param text_size_param numeric to scale ggplot text size
+#' @param heatmap_cols a cector with three colors that is passed to ggplot2::scale_fill_gradientn
 #' @return ggplot object
 #'
 #' @export
 #'
 #' @import ggplot2 magrittr
 #' @importFrom tidyr gather
+#' @importFrom dplyr group_by mutate
 #' @importFrom rlang sym
+#' @importFrom scales squish
 #'
 
 
-plot_heat_aligned_fibeR = function(aligned_fibeR){
-
+plot_heat_aligned_fibeR = function(aligned_fibeR,max_value_heat = 0.2,min_time = -1000,max_time=4000,text_size_param=15,heatmap_cols = c("#0072B2","#ffffff","#D55E00")){
 
   # check ncols
+  #TODO
 
   # make long
-  # aligned_fibeR_long = aligned_fibeR %>% dplyr::mutate(time = as.numeric(rownames(aligned_fibeR))) %>%tidyr::gather(key="sample",value="value",-time)
-  #
-  #
-  # # heatmap_df_long = all_dff_long %>% dplyr::filter(signal %in% c("yes small","yes")) %>% na.omit()
-  # # heatmap_df_long$sample = as.character(heatmap_df_long$sample)
-  # heatmap_df_long = all_results_decay_subtract_results %>% tidyr::gather(-time_from_intervention_int,key="sample",value="dff") %>% dplyr::rename(time_step=time_from_intervention_int)
-  # heatmap_df_long$time_step = as.numeric(heatmap_df_long$time_step)
-  # table(heatmap_df_long$sample)
-  #
-  # heatmap_df_long= heatmap_df_long[heatmap_df_long$time_step>-500 & heatmap_df_long$time_step<1500,]
-  #
-  # # make heatmap
-  # require(scales)
-  # all_values_max = max(c(abs(heatmap_df_long$dff),1),na.rm = TRUE)
-  # min_value=-0.1#-1*all_values_max
-  # max_value=0.1#all_values_max
-  # dff_heatmap = ggplot(heatmap_df_long, aes(x = time_step, y = sample, fill = dff)) +
-  #   geom_tile() +
-  #   # facet_grid(sample~., scales="free_y") +
-  #   #theme(axis.text.y = element_blank())+
-  #   ggplot2::scale_fill_gradientn(colours=c("#2643ff","#ffffff","#ff1414"),na.value = "grey",
-  #                                 breaks=c(min_value,0,max_value),labels=c(round(min_value,3),"0",round(max_value,3)),
-  #                                 limits=c(min_value,max_value), oob=squish) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-  # # and show
-  # dff_heatmap
+  aligned_fibeR_long = aligned_fibeR %>% dplyr::mutate(time = as.numeric(rownames(aligned_fibeR))) %>%tidyr::gather(key="sample",value="value",-time)
 
-  return(NULL)
+  # filter
+  aligned_fibeR_long= aligned_fibeR_long[aligned_fibeR_long$time > min_time & aligned_fibeR_long$time < max_time,]
+
+  # make heatmap
+ # all_values_max = max(c(abs(aligned_fibeR_long$dff),1),na.rm = TRUE)
+  min_value= -1 * max_value_heat
+  max_value= max_value_heat
+  if(max_value_heat < max(abs(aligned_fibeR_long$value),na.rm = TRUE)){message("Warning: Heatmap scale is capped at ",max_value_heat, " but data exceeds this value (",round(max(abs(aligned_fibeR_long$value),na.rm = TRUE) - max_value_heat,4),")! Consider changing max_value_heat." )}
+
+  fibeR_heatmap = ggplot(aligned_fibeR_long, aes(x = time, y = sample, fill = value)) +
+    geom_tile() +
+    theme_bw()+
+    theme(text=element_text(size=text_size_param))+
+    ggplot2::scale_fill_gradientn(colours=heatmap_cols,
+                                  na.value = "grey",
+                                  breaks=c(min_value,0,max_value),
+                                  labels=c(round(min_value,3),"0",round(max_value,3)),
+                                  limits=c(min_value,max_value), oob=scales::squish) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+  return(fibeR_heatmap)
 }

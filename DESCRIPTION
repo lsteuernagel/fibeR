@@ -3,9 +3,9 @@ Title: Fiber photometry processing and analysis with R
 Version: 0.0.1
 Authors@R: 
     person("Lukas", "Steuernagel", , "first.last@example.com", role = c("aut", "cre"))
-Description: Fiber photometry processing and analysis with R
+Description: Fiber photometry processing and analysis with R.
 License: MIT + file LICENSE
-Imports: methods, stats, rlang, stringr, magrittr, dplyr, tidyr, signal, data.table, ggplot2
+Imports: methods, stats, grDevices, rlang, stringr, magrittr, dplyr, tidyr, signal, data.table, ggplot2, scales, zoo
 Suggests: 
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

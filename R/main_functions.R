@@ -113,6 +113,8 @@ import_fibeR = function(input_path, sample_id = NULL,id_infererence="pathname", 
 #'
 #' @export
 #'
+#' @importFrom utils txtProgressBar setTxtProgressBar
+#'
 #'
 
 import_fibeR_batch = function(batch_path, batch_output_path = paste0(tempdir(),"/fibeR_batch/"), showProgress = TRUE, verbose =FALSE, id_infererence = "pathname",...){
@@ -224,6 +226,7 @@ load_fibeR = function(id,input_path){
 #' @export
 #'
 #' @importFrom data.table fread
+#' @importFrom utils txtProgressBar setTxtProgressBar
 #'
 #'
 
@@ -259,7 +262,7 @@ load_fibeR_batch = function(batch_path, showProgress = TRUE, verbose =FALSE ,...
 
     # read:
     fiber_sample_list[[i]] = load_fibeR(input_path = input_folders[i],
-                                        sample_id = names(input_folders)[i])
+                                        id = names(input_folders)[i])
     # TODO: fiber_sample_list[[i]]$folder_name = output_folders[i]
     # update progress
     if(showProgress){ setTxtProgressBar(progress_bar,i) }
@@ -618,6 +621,7 @@ process_fibeR = function(fibeR_input,name_signal = "x465A",name_control = "x405A
 #' @export
 #'
 #' @importFrom data.table fread
+#' @importFrom utils txtProgressBar setTxtProgressBar
 #'
 
 process_fibeR_batch = function(fibeR_list,showProgress =TRUE,start_note_all = 2,verbose=FALSE, ...){

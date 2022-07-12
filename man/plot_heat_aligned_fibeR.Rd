@@ -4,14 +4,31 @@
 \alias{plot_heat_aligned_fibeR}
 \title{Plot a heatmap of a data.frame that was created with \link[fibeR]{align_fibeR}}
 \usage{
-plot_heat_aligned_fibeR(aligned_fibeR)
+plot_heat_aligned_fibeR(
+  aligned_fibeR,
+  max_value_heat = 0.2,
+  min_time = -1000,
+  max_time = 4000,
+  text_size_param = 15,
+  heatmap_cols = c("#0072B2", "#ffffff", "#D55E00")
+)
 }
 \arguments{
-\item{aligned_fibeR}{object of class fibeR_data}
+\item{aligned_fibeR}{dataframe with aligned fiber photometry results and time integers as rownames}
+
+\item{max_value_heat}{which value to cap heatmap at. Defaults to 0.2 (20\% dFF). Dependinng on the data to plots this should be adjusted.}
+
+\item{min_time}{time to start heatmap (before intervention). useful when some samples are much longer than others}
+
+\item{max_time}{time to end heatmap}
+
+\item{text_size_param}{numeric to scale ggplot text size}
+
+\item{heatmap_cols}{a cector with three colors that is passed to ggplot2::scale_fill_gradientn}
 }
 \value{
 ggplot object
 }
 \description{
-todo: description
+Makes a heatmp plot
 }
