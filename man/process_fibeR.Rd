@@ -15,7 +15,7 @@ process_fibeR(
   cutoff_end = 5,
   start_note = 2,
   intervention_second_fallback = 600,
-  reduce_for_comparability = TRUE,
+  reduce_for_comparability = FALSE,
   remove_intervals = FALSE,
   dff_method = c("decay", "median", "fit"),
   correct_with_control = TRUE,

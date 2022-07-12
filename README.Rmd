@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 
 Fiber photometry processing and data analysis
 
-## Installation
+# Installation
 
 Install fibeR using:
 
@@ -34,7 +34,7 @@ Check whether fibeR can be loaded:
 library(fibeR)
 ```
 
-## Quick start (one sample)
+# Quick start (one sample)
 
 ```{r}
 sample_path =   "/beegfs/v0/labnet-data/calcium/cbauder/BAU0000444100620-200610-173408/" # add your own path
@@ -44,7 +44,7 @@ plot_fibeR(fiber_sample,datatype = "decay") # use 'raw' to get raw data plot
 ```
 
 
-## Quick start (multiple samples)
+# Quick start (multiple samples)
 
 The '_batch' functions allow running the import and processing on a folder with many samples (that can be organized in various subfolders).
 Depending on the number of samples this can take a while (~10 sec per sample).
@@ -61,12 +61,12 @@ names(fiber_sample_list) ## access list elements like this : fiber_sample_list[[
 ```
 
 
-## Example with one sample
+# Example with one sample
 
 In the readme we are only highlighting the basic usage and the most important parameters. You can always type
 ?function (e.g. ?process_fibeR to read about more parameters etc.)
 
-### Import a TDT sample
+## Import a TDT sample
 
 Import an example fiber sample by specifying the path to the folder containing the .tbk files from TDT:
 
@@ -84,7 +84,7 @@ The result is an fibeR_data object (essentially an R list) with the data and id:
 str(fiber_sample)
 ```
 
-### Import a TDT sample
+## Import a TDT sample
 
 We can then process the sample. This mostly includes calculation of dFF. For most dFF calculations we require an intervention time point to calculate the baseline on the pre-intervention data
 
@@ -115,11 +115,11 @@ str(fiber_sample)
 
 The processing function added the processed data (and also baseline information) to the fibeR_data object.
 
-### Plot the results 
+## Plot the results 
 
 We can use the plot_fibeR function to plot the content of the fibeR_data object
 
-#### Raw data
+### Raw data
 
 First we plot the raw input ( we could also do this before the processing, but then we cannot include the baseline into this plot)
 
@@ -131,7 +131,7 @@ The two most important parameters are:
 plot_fibeR(fiber_sample,datatype = "raw",split_plots = TRUE)
 ```
 
-#### Processed data
+### Processed data
 
 Then we can plot the processed (and normalized) dFF signal.
 
@@ -141,7 +141,7 @@ For this we set **datatype** to "decay" which means we will plot the data normal
 plot_fibeR(fiber_sample,datatype = "decay")
 ```
 
-### Save the results
+## Save the results
 
 We can export the fibeR_data object into easily readable flat table files using the save function. 
 
@@ -152,7 +152,7 @@ example_path = paste0(tempdir(),"/")
 save_fibeR(fiber_sample, output_path = example_path)
 ```
 
-#### Re-load data
+### Re-load data
 
 load_fibeR allows to re-assemble a fibeR_data object from the exported files. This saves us re-exporting (from matlab) and re-processing.
 This function requires the id of the sample (which be default is the folder name).
@@ -164,7 +164,7 @@ names(newly_loaded)
 ```
 
 
-## Multiple Samples (batch)
+# Multiple Samples (batch)
 
 To be extended!
 
@@ -173,17 +173,17 @@ Depending on the number of samples this can take a while (~10 sec per sample).
 
 It is recommended to specify an output folder ('batch_sample_output_path'), then re-importing or loading data is much faster in the next session (because Matlab and downsampling are skipped).
 
-### Import data
+## Import data
 
 Similar to quick start:
 
 ```{r}
-batch_sample_path =   "/beegfs/v0/labnet-data/calcium/cbauder/2020_07_09/" # add your own path
+batch_sample_path =   "/beegfs/v0/labnet-data/calcium/cbauder/2021_04_20/" # add your own path
 batch_sample_output_path = "/beegfs/scratch/bruening_scratch/lsteuernagel/data/fiberPhotometry/testexport/readme/" # change to your own path on scratch
 fiber_sample_list = import_fibeR_batch(batch_path = batch_sample_path,batch_output_path = batch_sample_output_path)
 ```
 
-### Process data 
+## Process data 
 
 ```{r}
 fiber_sample_list = process_fibeR_batch(fiber_sample_list,start_note_all = 2) # specify the intervention note, typically 2 (1 being the start of recording)
@@ -191,27 +191,27 @@ names(fiber_sample_list) ## access list elements like this : fiber_sample_list[[
 ```
 
 
-### Access individual samples
+## Access individual samples
 
 We can subset the list to individual samples by index or sample_id and then work with those using the functions shown in the above section 'Example with one sample'
 
 ```{r}
-single_sample = fiber_sample_list[["090720BRA0012161-200709-141509"]]
+single_sample = fiber_sample_list[["2004BRA0015104-210420-142141"]]
 str(single_sample)
 ```
 
 We can also plot this sample:
 
 ```{r}
-plot_fibeR(fiber_sample_list[["090720BRA0012161-200709-141509"]],datatype = "raw",split_plots = TRUE)
+plot_fibeR(fiber_sample_list[["2004BRA0015104-210420-142141"]],datatype = "raw",split_plots = TRUE)
 ```
 
 Which happens to look a bit weird with the control and signal differing mostly.
 
-### Plot all samples
+## Plot all samples
 
 
-#### Align samples
+### Align samples
 
 Until now we hav treated each sample individually- The _batch functions allow convenient loading and processing but ultimately also just iterate over samples.
 
@@ -224,13 +224,26 @@ dim(aligned_dFF)
 
 If we specify multiple 'columns_to_align' (out of ('signal', 'control', 'decay', 'median', 'fit')) the function does not return one matrix (or data.frame) but a list of multiple.
 
-#### Plot multiple samples together (lines)
+### Plot multiple samples together (lines)
+
+We can now show multiple samples together in one line plot.
+
+```{r}
+suppressWarnings(print(plot_aligned_fibeR(aligned_dFF))) # calling plot_aligned_fibeR(aligned_dFF) is enough
+```
 
 
-#### Adding mean and variance  (lines)
+### Adding mean and variance  (lines)
 
+It might also be desirable to plot the mean and standard deviation (especially in real world scenarios with more than 3 samples).
 
-#### Plotting samples as a heatmap
+We can set summary_stat = TRUE to plot only the mean and sd: 
+
+```{r}
+suppressWarnings(print(plot_aligned_fibeR(aligned_dFF,summary_stat = TRUE))) # calling plot_aligned_fibeR(aligned_dFF,summary_stat = TRUE) is enough
+```
+
+### Plotting samples as a heatmap
 
 TODO: heatmap !
 
@@ -239,14 +252,14 @@ TODO: heatmap !
 ```
 
 
-#### Multiple conditions & List subsetting
+### Multiple conditions & List subsetting
 
 Currently fibeR does not support handling data conditions.
 
 To make plot similar to the ones above yourself, you can import data into different sample-lists by calling import_fibeR_batch or load_fibeR_batch on different folders.
 Or, if you have loaded everything into one big list, you can subset that list into multiple subsets and then align and plot these individually!
 
-#### Exporting data
+### Exporting data
 
 The resulting data.frames can be exported by any standard R write function like 'write.table'. here we are using data.table::fwrite()
 
@@ -256,7 +269,7 @@ data.table::fwrite(aligned_dFF,paste0(batch_sample_output_path,"aligned_dFF_exam
 ```
 
 
-### Save & load data
+## Save & load data
 
 Similar to the section 'Example with one sample' we can save and load the results. With many samples, this saves time processing the data. 
 
@@ -271,13 +284,13 @@ TODO: load !
 ```
 
 
-## Details on Matlab and caching
+# Details on Matlab and caching
 
 Will be extended in the future.
 
 Most importantly: You can change the outputpath of import_fibeR to a permanent location in your beegfs/scratch or home directoy to save the Matlab exports permanently which decreases load times when working repeatedly with samples!
 
-## Details on Visualization
+# Details on Visualization
 
 Will be extended in the future.
 

@@ -1,4 +1,8 @@
 
+##########
+### plot_fibeR
+##########
+
 #' Plot an object of class fibeR_data
 #'
 #' Plot the raw or processed data from a list-like fibeR_data using ggplot. The most important option is datatype ('raw' for raw data or 'decay','fit','median' for processed (dFF) data).
@@ -119,6 +123,7 @@ plot_fibeR = function(fibeR_data,datatype = "raw",split_plots = TRUE, datatype_b
   # finalize plot:
   p1 = p1 +
     scale_color_manual(values=color_vector)+
+    theme_bw()+
     theme(text=element_text(size=text_size_param))+
     xlab("Time (seconds)")+
     ylab(yaxis_name)+
@@ -137,7 +142,7 @@ plot_fibeR = function(fibeR_data,datatype = "raw",split_plots = TRUE, datatype_b
 
     # filename
     if(check_raw){
-     filename = paste0(c(output_path,fibeR_data$id,"_","raw",".png"))
+      filename = paste0(c(output_path,fibeR_data$id,"_","raw",".png"))
     }else{
       filename = paste0(c(output_path,fibeR_data$id,"_","dFF_",paste0(gsub("dFF_","",valid_columns),collapse = "_"),".png"),collapse = "")
     }
@@ -150,5 +155,118 @@ plot_fibeR = function(fibeR_data,datatype = "raw",split_plots = TRUE, datatype_b
 }
 
 
+##########
+### plot_aligned_fibeR
+##########
+
+#' Plot a data.frame that was created with \link[fibeR]{align_fibeR}
+#'
+#' todo: description
+#'
+#' @param aligned_fibeR object of class fibeR_data
+#' @param yaxis_label label for yaxis
+#' @inheritParams plot_fibeR
+#' @return ggplot object
+#'
+#' @export
+#'
+#' @import ggplot2 magrittr
+#' @importFrom tidyr gather
+#' @importFrom dplyr group_by mutate
+#' @importFrom rlang sym
+#' @importFrom grDevices colorRamp
+#'
 
 
+plot_aligned_fibeR = function(aligned_fibeR,summary_stat = FALSE,summary_color = "#0072B2",yaxis_label = "dFF",linesize = 0.3, min_yaxis_dFF = 0.2,add_hline = TRUE,add_vline = TRUE, text_size_param = 15){
+
+  # check ncols
+
+  # make long
+  aligned_fibeR_long = aligned_fibeR %>% dplyr::mutate(time = as.numeric(rownames(aligned_fibeR))) %>% tidyr::gather(key="sample",value="value",-time)
+
+  # plot
+  if(!summary_stat){
+    p1 = ggplot(aligned_fibeR_long,aes(x=time,y=value,group=sample,color=sample))+
+      geom_line(size=linesize)+
+      ylim(c(min(-1*min_yaxis_dFF,min(aligned_fibeR_long$value,na.rm = TRUE)*1.1),max(min_yaxis_dFF,max(aligned_fibeR_long$value,na.rm = TRUE)*1.1)))
+  }else{
+    aligned_fibeR_long = aligned_fibeR_long %>% dplyr::group_by(time) %>% dplyr::mutate(mean = mean(value), sd = sd(value))
+    p1 = ggplot(data = aligned_fibeR_long, aes(x = time, group = sample)) +
+      geom_line(aes(y = mean),color= summary_color)+
+      geom_ribbon(aes(y = mean, ymin = mean - sd, ymax = mean + sd),fill = summary_color,alpha = 0.2)
+  }
+
+  # finalize plot:
+  p1 = p1 +
+    #scale_color_manual(values=color_vector)+
+    theme_bw()+
+    theme(text=element_text(size=text_size_param))+
+    xlab("Time (seconds)")+
+    ylab(yaxis_label)
+  # hline
+  if(add_hline){ p1 = p1 + geom_hline(yintercept = 0,color="grey40")}
+  if(add_vline){ p1 = p1 + geom_vline(xintercept = 0,color="grey40")}
+
+  # color:
+  if(!summary_stat){
+    getOkabeItoPalette = grDevices::colorRampPalette(palette.colors(palette = "Okabe-Ito"))
+    p1 = p1+scale_color_manual(values=getOkabeItoPalette(max(ncol(aligned_fibeR),9)))
+  }
+
+  return(p1)
+}
+
+##########
+### plot_heat_aligned_fibeR
+##########
+
+#' Plot a heatmap of a data.frame that was created with \link[fibeR]{align_fibeR}
+#'
+#' todo: description
+#'
+#' @param aligned_fibeR object of class fibeR_data
+#' @return ggplot object
+#'
+#' @export
+#'
+#' @import ggplot2 magrittr
+#' @importFrom tidyr gather
+#' @importFrom rlang sym
+#'
+
+
+plot_heat_aligned_fibeR = function(aligned_fibeR){
+
+
+  # check ncols
+
+  # make long
+  # aligned_fibeR_long = aligned_fibeR %>% dplyr::mutate(time = as.numeric(rownames(aligned_fibeR))) %>%tidyr::gather(key="sample",value="value",-time)
+  #
+  #
+  # # heatmap_df_long = all_dff_long %>% dplyr::filter(signal %in% c("yes small","yes")) %>% na.omit()
+  # # heatmap_df_long$sample = as.character(heatmap_df_long$sample)
+  # heatmap_df_long = all_results_decay_subtract_results %>% tidyr::gather(-time_from_intervention_int,key="sample",value="dff") %>% dplyr::rename(time_step=time_from_intervention_int)
+  # heatmap_df_long$time_step = as.numeric(heatmap_df_long$time_step)
+  # table(heatmap_df_long$sample)
+  #
+  # heatmap_df_long= heatmap_df_long[heatmap_df_long$time_step>-500 & heatmap_df_long$time_step<1500,]
+  #
+  # # make heatmap
+  # require(scales)
+  # all_values_max = max(c(abs(heatmap_df_long$dff),1),na.rm = TRUE)
+  # min_value=-0.1#-1*all_values_max
+  # max_value=0.1#all_values_max
+  # dff_heatmap = ggplot(heatmap_df_long, aes(x = time_step, y = sample, fill = dff)) +
+  #   geom_tile() +
+  #   # facet_grid(sample~., scales="free_y") +
+  #   #theme(axis.text.y = element_blank())+
+  #   ggplot2::scale_fill_gradientn(colours=c("#2643ff","#ffffff","#ff1414"),na.value = "grey",
+  #                                 breaks=c(min_value,0,max_value),labels=c(round(min_value,3),"0",round(max_value,3)),
+  #                                 limits=c(min_value,max_value), oob=squish) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+  # # and show
+  # dff_heatmap
+
+  return(NULL)
+}
