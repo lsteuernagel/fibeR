@@ -1,18 +1,9 @@
 
+# Functions to import / save / load and prcoess data.
 
-# Functions to export binary results to flat files that can be imported in R.
 
 # functions to ADD.
-# make heatmap
-# make multi_line_plot
-
-# align data
-# save align data
-
 # make meta_data
-
-
-
 
 ##########
 ### import_fibeR
@@ -219,7 +210,6 @@ load_fibeR = function(id,input_path){
 #' Wrapper around load_fibeR to handle directories with multiple samples.
 #'
 #' @param batch_path the full path to the top level directory
-#' @param showProgress logical. Whether to display progress bar
 #' @param verbose logical. Whther to print  messages
 #' @return list of fibeR_data objects
 #'
@@ -230,12 +220,10 @@ load_fibeR = function(id,input_path){
 #'
 #'
 
-# TODO needs testing!
-
-load_fibeR_batch = function(batch_path, showProgress = TRUE, verbose =FALSE ,...){
+load_fibeR_batch = function(batch_path, verbose =FALSE){
 
   # list all tbk full paths in batch_path
-  all_raw_files = list.files(batch_path,pattern = ".raw.txt",full.names = TRUE,recursive = TRUE)
+  all_raw_files = list.files(batch_path,pattern = ".raw.data.txt",full.names = TRUE,recursive = TRUE)
 
   # check that enough samples exist
   if(length(all_raw_files)<1){stop("Cannot find any subdirectories with .raw.txt files in ",batch_path)}
@@ -243,17 +231,16 @@ load_fibeR_batch = function(batch_path, showProgress = TRUE, verbose =FALSE ,...
   # clean
   all_raw_files = sapply(all_raw_files,function(x){gsub("//","/",x)})
 
-  # TODO: need to rework below part:
-  # sample_ids = sapply(all_tbk_files,function(x,n=0){base::strsplit(x,split="/")[[1]][length(strsplit(x,split="/")[[1]])-n]},n = nval)
-  #
-  # # format input folders:
-  # input_folders = sapply(all_tbk_files,function(x,n=1){paste0(base::strsplit(x,split="/")[[1]][1:(length(strsplit(x,split="/")[[1]])-n)],collapse = "/")})
-  # input_folders = sapply(input_folders,function(x){paste0(x,"/")})
-  # names(input_folders) = sample_ids
-  #
+  sample_ids = sapply(all_raw_files,function(x,n=0){base::strsplit(x,split="/")[[1]][length(strsplit(x,split="/")[[1]])-n]})
+  sample_ids = gsub(".raw.data.txt","",sample_ids)
+
+  # format input folders:
+  input_folders = sapply(all_raw_files,function(x,n=1){paste0(base::strsplit(x,split="/")[[1]][1:(length(strsplit(x,split="/")[[1]])-n)],collapse = "/")})
+  input_folders = sapply(input_folders,function(x){paste0(x,"/")})
+  names(input_folders) = sample_ids
 
   # init progress
-  if(showProgress){ progress_bar = txtProgressBar(min = 0, max = length(input_folders), initial = 0,style = 3)}
+  #if(showProgress){ progress_bar = txtProgressBar(min = 0, max = length(input_folders), initial = 0,style = 3)}
 
   # iterate over all samples:
   fiber_sample_list = list()
@@ -261,11 +248,11 @@ load_fibeR_batch = function(batch_path, showProgress = TRUE, verbose =FALSE ,...
   for(i in 1:length(input_folders)){
 
     # read:
-    fiber_sample_list[[i]] = load_fibeR(input_path = input_folders[i],
-                                        id = names(input_folders)[i])
-    # TODO: fiber_sample_list[[i]]$folder_name = output_folders[i]
+    fiber_sample_list[[i]] = load_fibeR(id = names(input_folders)[i], input_path = input_folders[i])
+    fiber_sample_list[[i]]$folder_name = gsub(batch_path,"",input_folders[i])
+    names(fiber_sample_list)[i] = fiber_sample_list[[i]]$id
     # update progress
-    if(showProgress){ setTxtProgressBar(progress_bar,i) }
+    #if(showProgress){ setTxtProgressBar(progress_bar,i) }
   }
 
 
@@ -673,7 +660,7 @@ process_fibeR_batch = function(fibeR_list,showProgress =TRUE,start_note_all = 2,
 #'
 #'
 
-align_fibeR = function(fibeR_list, columns_to_align = c("decay"), input_data_name = "process.data",name_signal = "x465A",name_control = "x405A"){
+align_fibeR = function(fibeR_list, columns_to_align = c("decay"), input_data_name = "process.data",name_signal = "x465A",name_control = "x405A",verbose=FALSE){
 
   # init main list (of lists):
   aligned_colum_list = list()

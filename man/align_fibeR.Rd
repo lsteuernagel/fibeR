@@ -9,7 +9,8 @@ align_fibeR(
   columns_to_align = c("decay"),
   input_data_name = "process.data",
   name_signal = "x465A",
-  name_control = "x405A"
+  name_control = "x405A",
+  verbose = FALSE
 )
 }
 \arguments{

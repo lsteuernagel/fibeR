@@ -19,6 +19,10 @@ plot_aligned_fibeR(
 \arguments{
 \item{aligned_fibeR}{dataframe with aligned fiber photometry results and time integers as rownames}
 
+\item{summary_stat}{logical. If TRUE: plot mean and sd instead of individual lines}
+
+\item{summary_color}{color for mean and sd}
+
 \item{yaxis_label}{label for yaxis}
 
 \item{linesize}{the ggplot line size. defaults to 0.3}

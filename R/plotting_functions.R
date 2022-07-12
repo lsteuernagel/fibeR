@@ -1,4 +1,6 @@
 
+# Functions to visualize results
+
 ##########
 ### plot_fibeR
 ##########
@@ -164,6 +166,8 @@ plot_fibeR = function(fibeR_data,datatype = "raw",split_plots = TRUE, datatype_b
 #' todo: description
 #'
 #' @param aligned_fibeR dataframe with aligned fiber photometry results and time integers as rownames
+#' @param summary_stat logical. If TRUE: plot mean and sd instead of individual lines
+#' @param summary_color color for mean and sd
 #' @param yaxis_label label for yaxis
 #' @inheritParams plot_fibeR
 #' @return ggplot object

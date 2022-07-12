@@ -4,12 +4,10 @@
 \alias{load_fibeR_batch}
 \title{Batch load previously saved fiber photometry data into R}
 \usage{
-load_fibeR_batch(batch_path, showProgress = TRUE, verbose = FALSE, ...)
+load_fibeR_batch(batch_path, verbose = FALSE)
 }
 \arguments{
 \item{batch_path}{the full path to the top level directory}
-
-\item{showProgress}{logical. Whether to display progress bar}
 
 \item{verbose}{logical. Whther to print  messages}
 }
