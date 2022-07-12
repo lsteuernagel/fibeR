@@ -2,6 +2,15 @@
 
 # Functions to export binary results to flat files that can be imported in R.
 
+# functions to ADD.
+# make heatmap
+# make multi_line_plot
+
+# align data
+  # save align data
+
+# make meta_data
+
 ##########
 ### import_fibeR
 ##########
@@ -93,9 +102,9 @@ import_fibeR = function(input_path, sample_id = NULL,id_infererence="pathname", 
 #' Wrapper around import_fibeR to handle directories with multiple samples.
 #'
 #' @param batch_path the full path to the top level directory
-#' @param batch_output_path where to store the data on disk. Defaults to a temp directory but it is recommened to set to a permanent location to speed up re-loading .
+#' @param batch_output_path where to store the data on disk. Defaults to a temp directory but it is recommended to set to a permanent location to speed up re-loading .
 #' @param showProgress logical. Whether to display progress bar
-#' @param verbose logical. Whther to print  messages
+#' @inheritParams import_fibeR
 #' @param ... further parameters passed to \link[fibeR]{import_fibeR}
 #' @return list of fibeR_data objects
 #'
@@ -103,7 +112,7 @@ import_fibeR = function(input_path, sample_id = NULL,id_infererence="pathname", 
 #'
 #'
 
-import_fibeR_batch = function(batch_path, batch_output_path = paste0(tempdir(),"/fibeR_batch/"), showProgress = TRUE, verbose =FALSE ,...){
+import_fibeR_batch = function(batch_path, batch_output_path = paste0(tempdir(),"/fibeR_batch/"), showProgress = TRUE, verbose =FALSE, id_infererence = "pathname",...){
 
   # mkdir batch_output_path
   system(paste0("mkdir -p ",batch_output_path))
@@ -131,13 +140,13 @@ import_fibeR_batch = function(batch_path, batch_output_path = paste0(tempdir(),"
   names(output_folders_full) = sample_ids
 
   # init progress
-  if(showProgress){ progress_bar = txtProgressBar(min = 0, max = length(input_folders), initial = 0)}
-
+  if(showProgress){ progress_bar = txtProgressBar(min = 0, max = length(input_folders), initial = 0,style = 3)}
+  if(verbose){ message("Importing ",length(input_folders)," samples from ",batch_path)}
   # iterate over all samples:
   fiber_sample_list = list()
   # save them in batch_output_path using the same folder structure as found in batch_path
   for(i in 1:length(input_folders)){
-
+    system(paste0("mkdir -p ",output_folders_full[i]))
     # read:
     fiber_sample_list[[i]] = import_fibeR(input_path = input_folders[i],
                                           sample_id = names(input_folders)[i],
@@ -145,6 +154,7 @@ import_fibeR_batch = function(batch_path, batch_output_path = paste0(tempdir(),"
                                           verbose = verbose,
                                           ... )
     fiber_sample_list[[i]]$folder_name = output_folders[i]
+    names(fiber_sample_list)[i] = fiber_sample_list[[i]]$id
     # update progress
     if(showProgress){ setTxtProgressBar(progress_bar,i) }
   }
@@ -237,7 +247,7 @@ load_fibeR_batch = function(batch_path, showProgress = TRUE, verbose =FALSE ,...
   #
 
   # init progress
-  if(showProgress){ progress_bar = txtProgressBar(min = 0, max = length(input_folders), initial = 0)}
+  if(showProgress){ progress_bar = txtProgressBar(min = 0, max = length(input_folders), initial = 0,style = 3)}
 
   # iterate over all samples:
   fiber_sample_list = list()
@@ -314,7 +324,7 @@ save_fibeR_batch = function(fibeR_list,batch_output_path, showProgress = TRUE, v
   # make path
   system(paste0("mkdir -p ",batch_output_path))
   # init progress
-  if(showProgress){ progress_bar = txtProgressBar(min = 0, max = length(fibeR_list), initial = 0)}
+  if(showProgress){ progress_bar = txtProgressBar(min = 0, max = length(fibeR_list), initial = 0,style = 3)}
   # iterate over all samples:
   fiber_sample_list = list()
   # save them in batch_output_path using the same folder structure as found in batch_path
@@ -528,11 +538,11 @@ process_fibeR = function(fibeR_input,name_signal = "x465A",name_control = "x405A
   if("decay" %in% dff_method){
     if(verbose){message("dFF: Estimate exponetial decay")}
     ## get the decay baseline for signal dFF:
-    decay_power_model_signal=fit_decay_power(process.data[process.data$time_from_intervention < 0, name_signal],
+    decay_power_model_signal = fit_decay_power(process.data[process.data$time_from_intervention < 0, name_signal],
                                              smooth_with_butter=TRUE,
                                              b_val = 10,
                                              verbose = 0,
-                                             pct_fallback = 0.3)$fit_model
+                                             pct_fallback = 0.3)$fit_model %>% suppressMessages()
     if(length(decay_power_model_signal)>0){
       predicted_signal_baseline_power = as.numeric(stats::predict(decay_power_model_signal,
                                                                   newdata=data.frame(x=process.data$time_from_intervention-min(process.data$time_from_intervention))))
@@ -548,7 +558,7 @@ process_fibeR = function(fibeR_input,name_signal = "x465A",name_control = "x405A
                                                smooth_with_butter=TRUE,
                                                b_val = 10,
                                                verbose = 0,
-                                               pct_fallback = 0.3)$fit_model
+                                               pct_fallback = 0.3)$fit_model %>% suppressMessages()
     if(length(decay_power_model_control)>0){
       if(length(predicted_signal_baseline_power)==1){
         predicted_control_baseline_power = median_control_baseline # if signal failed, also use median here
@@ -598,7 +608,9 @@ process_fibeR = function(fibeR_input,name_signal = "x465A",name_control = "x405A
 #'
 #' @param fibeR_list a list of fibeR_data objects to save
 #' @param showProgress logical. Whether to display progress bar
-#' @param verbose logical. Whther to print  messages
+#' @param start_note_all one start note index for all (cannot handle differing startnotes at the moment !)
+#' @param verbose logical. whether to print messages (mostly from process_fibeR)
+#' @param ... further parameters passed to \link[fibeR]{process_fibeR}
 #' @return list of fibeR_data objects
 #'
 #' @export
@@ -606,26 +618,27 @@ process_fibeR = function(fibeR_input,name_signal = "x465A",name_control = "x405A
 #' @importFrom data.table fread
 #'
 
-process_fibeR_batch = function(fibeR_list,showProgress =TRUE,verbose=FALSE){
+process_fibeR_batch = function(fibeR_list,showProgress =TRUE,start_note_all = 2,verbose=FALSE, ...){
 
-  if(showProgress){ progress_bar = txtProgressBar(min = 0, max = length(fibeR_list), initial = 0)}
+  if(showProgress){ progress_bar = txtProgressBar(min = 0, max = length(fibeR_list), initial = 0,style = 3)}
   # iterate over all samples:
-  fiber_sample_list = list()
-  # save them in batch_output_path using the same folder structure as found in batch_path
   for(i in 1:length(fibeR_list)){
 
     # get sample
-    fibeR_sample = fibeR_list[[i]]
+    fiber_sample = fibeR_list[[i]]
     # process:
-    fiber_sample_list[[i]] = save_fibeR(fibeR_sample,full_path)
+    fibeR_list[[i]] = process_fibeR(fiber_sample,
+                                    start_note = start_note_all,
+                                    verbose=verbose,
+                                    ...)
 
     # optionally plot:
-
+    # TODO
 
     # update progress
     if(showProgress){ setTxtProgressBar(progress_bar,i) }
 
   }
-  return(fiber_sample_list)
+  return(fibeR_list)
 
 }

@@ -9,17 +9,20 @@ import_fibeR_batch(
   batch_output_path = paste0(tempdir(), "/fibeR_batch/"),
   showProgress = TRUE,
   verbose = FALSE,
+  id_infererence = "pathname",
   ...
 )
 }
 \arguments{
 \item{batch_path}{the full path to the top level directory}
 
-\item{batch_output_path}{where to store the data on disk. Defaults to a temp directory but it is recommened to set to a permanent location to speed up re-loading .}
+\item{batch_output_path}{where to store the data on disk. Defaults to a temp directory but it is recommended to set to a permanent location to speed up re-loading .}
 
 \item{showProgress}{logical. Whether to display progress bar}
 
-\item{verbose}{logical. Whther to print  messages}
+\item{verbose}{whether to print messages}
+
+\item{id_infererence}{Only used if sample_id is NULL. Then 'pathname' will use the lowest level of path as id (default). 'tbkfile' will use the name of the tbk file in path as id. Anything else will assign a random number as id.}
 
 \item{...}{further parameters passed to \link[fibeR]{import_fibeR}}
 }
