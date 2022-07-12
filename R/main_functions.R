@@ -7,9 +7,12 @@
 # make multi_line_plot
 
 # align data
-  # save align data
+# save align data
 
 # make meta_data
+
+
+
 
 ##########
 ### import_fibeR
@@ -343,7 +346,6 @@ save_fibeR_batch = function(fibeR_list,batch_output_path, showProgress = TRUE, v
     # update progress
     if(showProgress){ setTxtProgressBar(progress_bar,i) }
   }
-  return(fiber_sample_list)
 }
 
 ##########
@@ -391,7 +393,7 @@ save_fibeR_batch = function(fibeR_list,batch_output_path, showProgress = TRUE, v
 #'
 
 process_fibeR = function(fibeR_input,name_signal = "x465A",name_control = "x405A",downsample_data = FALSE,downsample_k=1000,verbose=TRUE,cutoff_start = 10,cutoff_end = 5,
-                         start_note = 2,intervention_second_fallback = 600,reduce_for_comparability =TRUE,remove_intervals=FALSE,
+                         start_note = 2,intervention_second_fallback = 600,reduce_for_comparability =FALSE,remove_intervals=FALSE,
                          dff_method = c("decay","median","fit"),correct_with_control=TRUE, pct_fallback = 0.3, b_val = 10){
 
   # check if input is fibeR_data
@@ -539,10 +541,10 @@ process_fibeR = function(fibeR_input,name_signal = "x465A",name_control = "x405A
     if(verbose){message("dFF: Estimate exponetial decay")}
     ## get the decay baseline for signal dFF:
     decay_power_model_signal = fit_decay_power(process.data[process.data$time_from_intervention < 0, name_signal],
-                                             smooth_with_butter=TRUE,
-                                             b_val = 10,
-                                             verbose = 0,
-                                             pct_fallback = 0.3)$fit_model %>% suppressMessages()
+                                               smooth_with_butter=TRUE,
+                                               b_val = 10,
+                                               verbose = 0,
+                                               pct_fallback = 0.3)$fit_model %>% suppressMessages()
     if(length(decay_power_model_signal)>0){
       predicted_signal_baseline_power = as.numeric(stats::predict(decay_power_model_signal,
                                                                   newdata=data.frame(x=process.data$time_from_intervention-min(process.data$time_from_intervention))))
@@ -642,3 +644,97 @@ process_fibeR_batch = function(fibeR_list,showProgress =TRUE,start_note_all = 2,
   return(fibeR_list)
 
 }
+
+##########
+### align_fibeR
+##########
+
+#' Align all fibeR samples in one list to the same timeline.
+#'
+#' This functions makes use of the zoo package to align samples in one matrix (for each data type). \link[fibeR]{process_fibeR} already adds an integer time value centered on the intervention time point, which is used by this function!.
+#'
+#' @param fibeR_list a list of fibeR_data objects to save
+#' @param columns_to_align  one or more of 'signal', 'control', 'decay', 'median', 'fit' . Nothing else will work ! (These are the standard columns in processed data. If the signal ist still named x465A (or whatever you specify in name_signal) in process.data it will be automatically renamed.).
+#' @param input_data_name  dataframe with data for alignment. Only change if you know what you are doing !
+#' @param name_signal character string with the name of the signal column in fibeR_input. Defaults to the MPI standard: 'x465A'
+#' @param name_control character string with the name of the control column in fibeR_input. Defaults to the MPI standard: 'x405A'
+#' @param verbose logical. whether to print messages (mostly from process_fibeR)
+#' @return aligned matrix or list of multiple aligned matrices
+#'
+#' @export
+#'
+#' @import magrittr zoo
+#' @importFrom dplyr rename
+#' @importFrom rlang sym
+#'
+#'
+
+align_fibeR = function(fibeR_list, columns_to_align = c("decay"), input_data_name = "process.data",name_signal = "x465A",name_control = "x405A"){
+
+  # init main list (of lists):
+  aligned_colum_list = list()
+
+
+  ## for each sample:
+  for(i in 1:length(fibeR_list)){
+
+    fiber_sample = fibeR_list[[i]]
+    current_id = fibeR_list[[i]]$id
+    columns_to_align_sample = columns_to_align
+
+    # todo check on
+    # check object and
+    if(!is(fiber_sample,"fibeR_data")){next}
+    if(is.null(fiber_sample[[input_data_name]])){next}
+
+    # get data
+    if(name_signal %in% colnames(fiber_sample[[input_data_name]]) & name_control %in% colnames(fiber_sample[[input_data_name]]) ){
+      data_as_input = fiber_sample[[input_data_name]] %>% dplyr::rename(signal = !!rlang::sym(name_signal),control = !!rlang::sym(name_control)  ) %>% as.data.frame()
+    }else{
+      data_as_input = fiber_sample[[input_data_name]] %>% as.data.frame()
+    }
+    # reduce to valid columns
+    if( input_data_name == "process.data"){
+      # update color_vector
+      columns_to_align_sample[! columns_to_align_sample %in% c("signal","control")] = paste0("dFF_",columns_to_align_sample[!columns_to_align_sample%in% c("signal","control")])
+    }
+    columns_to_align_sample = columns_to_align_sample[columns_to_align_sample %in% colnames(data_as_input)]
+    # subset to valid columns
+    data_as_input = data_as_input[,c("time_from_intervention",columns_to_align_sample),drop=FALSE]
+
+    # ensure that time_from_intervention is distinct
+    data_as_input = data_as_input %>% dplyr::distinct(time_from_intervention,.keep_all = TRUE)
+
+    #convert target columns to zoo amd add to list
+    for(col in columns_to_align_sample){
+      zoo_temp = zoo::zoo(data_as_input[,col],data_as_input$time_from_intervention)
+      aligned_colum_list[[paste0("results_",col,"_list")]][[current_id]] = zoo_temp
+    }
+  }
+
+  ## make matrices:
+  matrix_list = list()
+  for(col in columns_to_align_sample){
+    current_list = aligned_colum_list[[paste0("results_",col,"_list")]]
+    # check for corrupted time series
+    corr_index=sapply(current_list,function(x){zoo::index(x)})
+    keep_idx = which(!is.na(corr_index))
+    if(length(keep_idx) < length(corr_index)){message("Warning: Dropping ",length(corr_index) - length(keep_idx)," samples with corrupted time index")}
+    # remove
+    current_list = current_list[keep_idx]
+    # make df:
+    matrix_list[[col]] = as.data.frame(do.call(merge,current_list))
+    # current_result$time_from_intervention = rownames(current_result)
+    # current_result = current_result[,c(ncol(current_result),1:(ncol(current_result)-1))]
+  }
+
+  # return
+  if(length(matrix_list)==1){
+    return(matrix_list[[1]])
+  }else{
+    return(matrix_list)
+  }
+
+}
+
+

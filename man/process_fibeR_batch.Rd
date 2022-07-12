@@ -4,14 +4,24 @@
 \alias{process_fibeR_batch}
 \title{Batch save a list of fibeR_data objects}
 \usage{
-process_fibeR_batch(fibeR_list, showProgress = TRUE, verbose = FALSE)
+process_fibeR_batch(
+  fibeR_list,
+  showProgress = TRUE,
+  start_note_all = 2,
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
 \item{fibeR_list}{a list of fibeR_data objects to save}
 
 \item{showProgress}{logical. Whether to display progress bar}
 
-\item{verbose}{logical. Whther to print  messages}
+\item{start_note_all}{one start note index for all (cannot handle differing startnotes at the moment !)}
+
+\item{verbose}{logical. whether to print messages (mostly from process_fibeR)}
+
+\item{...}{further parameters passed to \link[fibeR]{process_fibeR}}
 }
 \value{
 list of fibeR_data objects

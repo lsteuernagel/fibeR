@@ -51,7 +51,7 @@ Depending on the number of samples this can take a while (~10 sec per sample).
 
 It is recommended to specify an output folder ('batch_sample_output_path'), then re-importing or loading data is much faster in the next session (because Matlab and downsampling are skipped).
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 batch_sample_path =   "/beegfs/v0/labnet-data/calcium/cbauder/2020_07_09/" # add your own path
 batch_sample_output_path = "/beegfs/scratch/bruening_scratch/lsteuernagel/data/fiberPhotometry/testexport/readme/" # change to your own path on scratch
 fiber_sample_list = import_fibeR_batch(batch_path = batch_sample_path,batch_output_path = batch_sample_output_path)
@@ -206,19 +206,68 @@ We can also plot this sample:
 plot_fibeR(fiber_sample_list[["090720BRA0012161-200709-141509"]],datatype = "raw",split_plots = TRUE)
 ```
 
+Which happens to look a bit weird with the control and signal differing mostly.
 
 ### Plot all samples
 
 
-### 
+#### Align samples
+
+Until now we hav treated each sample individually- The _batch functions allow convenient loading and processing but ultimately also just iterate over samples.
+
+To plot data together we need to align them to the same timeline. Part of this is already done during processing by adding the column 'time_from_intervention' and now we use the function align_fibeR makes to gather multiple samples in one matrix.
+
+```{r}
+aligned_dFF = align_fibeR(fiber_sample_list, columns_to_align = c("decay"))
+dim(aligned_dFF)
+```
+
+If we specify multiple 'columns_to_align' (out of ('signal', 'control', 'decay', 'median', 'fit')) the function does not return one matrix (or data.frame) but a list of multiple.
+
+#### Plot multiple samples together (lines)
+
+
+#### Adding mean and variance  (lines)
+
+
+#### Plotting samples as a heatmap
+
+TODO: heatmap !
+
+```{r}
+# TODO
+```
+
+
+#### Multiple conditions & List subsetting
+
+Currently fibeR does not support handling data conditions.
+
+To make plot similar to the ones above yourself, you can import data into different sample-lists by calling import_fibeR_batch or load_fibeR_batch on different folders.
+Or, if you have loaded everything into one big list, you can subset that list into multiple subsets and then align and plot these individually!
+
+#### Exporting data
+
+The resulting data.frames can be exported by any standard R write function like 'write.table'. here we are using data.table::fwrite()
+
+```{r}
+batch_sample_output_path = "/beegfs/scratch/bruening_scratch/lsteuernagel/data/fiberPhotometry/testexport/readme/"
+data.table::fwrite(aligned_dFF,paste0(batch_sample_output_path,"aligned_dFF_example.csv"))
+```
 
 
 ### Save & load data
 
-Similar to thesection 'Example with one sample' we can save and load the results. With many samples, this saves time processing the data. 
+Similar to the section 'Example with one sample' we can save and load the results. With many samples, this saves time processing the data. 
 
 ```{r}
 save_fibeR_batch(fiber_sample_list,batch_output_path = batch_sample_output_path) # save processed result to same path
+```
+
+TODO: load !
+
+```{r}
+# TODO
 ```
 
 
