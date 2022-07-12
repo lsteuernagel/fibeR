@@ -42,5 +42,5 @@ the imported data of the sample
 Runs Matlab functions to export either all or downsampled data from the binary TDT files.
 This is a wrapper function that calls export_tdt and export_Notes to export TDT binary files to .txt flat files and then imports these results to R.
 The intermediary exports are saved to a tempdir (cached for the session, so that when re-reading Matlab has not to be called twice). If you want to export them permanently, specify an existing directory in outputpath.
-TODO: If you have previously processed data with fibeR and saved the results you can alternatively use the function load_fibeR to skip Matlab export/import.
+If you have previously processed data with fibeR and saved the results you can alternatively use the function \link[fibeR]{load_fibeR} to skip Matlab export/import.
 }

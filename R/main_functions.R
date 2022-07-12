@@ -2,10 +2,6 @@
 
 # Functions to export binary results to flat files that can be imported in R.
 
-#TODO:
-# batch loading
-# batch processing!
-
 ##########
 ### import_fibeR
 ##########
@@ -15,7 +11,7 @@
 #' Runs Matlab functions to export either all or downsampled data from the binary TDT files.
 #' This is a wrapper function that calls export_tdt and export_Notes to export TDT binary files to .txt flat files and then imports these results to R.
 #' The intermediary exports are saved to a tempdir (cached for the session, so that when re-reading Matlab has not to be called twice). If you want to export them permanently, specify an existing directory in outputpath.
-#' TODO: If you have previously processed data with fibeR and saved the results you can alternatively use the function load_fibeR to skip Matlab export/import.
+#' If you have previously processed data with fibeR and saved the results you can alternatively use the function \link[fibeR]{load_fibeR} to skip Matlab export/import.
 #'
 #' @param input_path The full path to the binary files from TDT.
 #' @param sample_id The id that will be used. Defaults to NULL which will infer the id (see id_infererence).
@@ -89,6 +85,76 @@ import_fibeR = function(input_path, sample_id = NULL,id_infererence="pathname", 
 }
 
 ##########
+### import_fibeR_batch
+##########
+
+#' Batch import fiber photometry data into R via Matlab
+#'
+#' Wrapper around import_fibeR to handle directories with multiple samples.
+#'
+#' @param batch_path the full path to the top level directory
+#' @param batch_output_path where to store the data on disk. Defaults to a temp directory but it is recommened to set to a permanent location to speed up re-loading .
+#' @param showProgress logical. Whether to display progress bar
+#' @param verbose logical. Whther to print  messages
+#' @param ... further parameters passed to \link[fibeR]{import_fibeR}
+#' @return list of fibeR_data objects
+#'
+#' @export
+#'
+#'
+
+import_fibeR_batch = function(batch_path, batch_output_path = paste0(tempdir(),"/fibeR_batch/"), showProgress = TRUE, verbose =FALSE ,...){
+
+  # mkdir batch_output_path
+  system(paste0("mkdir -p ",batch_output_path))
+
+  # list all tbk full paths in batch_path
+  all_tbk_files = list.files(batch_path,pattern = ".Tbk$",full.names = TRUE,recursive = TRUE)
+
+  # check that enough samples exist
+  if(length(all_tbk_files)<1){stop("Cannot find any subdirectories with .Tbk files in ",batch_path)}
+
+  # extract sample ids
+  all_tbk_files = sapply(all_tbk_files,function(x){gsub("//","/",x)})
+  if(id_infererence=="pathname"){nval = 1}else if(id_infererence=="tbkfile"){nval = 0}else{  nval = 0}
+  sample_ids = sapply(all_tbk_files,function(x,n=0){base::strsplit(x,split="/")[[1]][length(strsplit(x,split="/")[[1]])-n]},n = nval)
+
+  # format input folders:
+  input_folders = sapply(all_tbk_files,function(x,n=1){paste0(base::strsplit(x,split="/")[[1]][1:(length(strsplit(x,split="/")[[1]])-n)],collapse = "/")})
+  input_folders = sapply(input_folders,function(x){paste0(x,"/")})
+  names(input_folders) = sample_ids
+
+  # format output structure
+  output_folders = sapply(all_tbk_files,function(x){gsub(batch_path,"",x)})
+  output_folders = sapply(output_folders,function(x,n=2){paste0(base::strsplit(x,split="/")[[1]][1:(length(strsplit(x,split="/")[[1]])-n)],collapse = "/")})
+  output_folders_full = sapply(output_folders,function(x,prefix){paste0(prefix,x,"/")},prefix=batch_output_path)
+  names(output_folders_full) = sample_ids
+
+  # init progress
+  if(showProgress){ progress_bar = txtProgressBar(min = 0, max = length(input_folders), initial = 0)}
+
+  # iterate over all samples:
+  fiber_sample_list = list()
+  # save them in batch_output_path using the same folder structure as found in batch_path
+  for(i in 1:length(input_folders)){
+
+    # read:
+    fiber_sample_list[[i]] = import_fibeR(input_path = input_folders[i],
+                                          sample_id = names(input_folders)[i],
+                                          outputpath = output_folders_full[i],
+                                          verbose = verbose,
+                                          ... )
+    fiber_sample_list[[i]]$folder_name = output_folders[i]
+    # update progress
+    if(showProgress){ setTxtProgressBar(progress_bar,i) }
+  }
+
+
+  return(fiber_sample_list)
+
+}
+
+##########
 ### load_fibeR
 ##########
 
@@ -128,6 +194,69 @@ load_fibeR = function(id,input_path){
   return(fibeR_input)
 }
 
+
+##########
+### load_fibeR_batch
+##########
+
+#' Batch load previously saved fiber photometry data into R
+#'
+#' Wrapper around load_fibeR to handle directories with multiple samples.
+#'
+#' @param batch_path the full path to the top level directory
+#' @param showProgress logical. Whether to display progress bar
+#' @param verbose logical. Whther to print  messages
+#' @return list of fibeR_data objects
+#'
+#' @export
+#'
+#' @importFrom data.table fread
+#'
+#'
+
+# TODO needs testing!
+
+load_fibeR_batch = function(batch_path, showProgress = TRUE, verbose =FALSE ,...){
+
+  # list all tbk full paths in batch_path
+  all_raw_files = list.files(batch_path,pattern = ".raw.txt",full.names = TRUE,recursive = TRUE)
+
+  # check that enough samples exist
+  if(length(all_raw_files)<1){stop("Cannot find any subdirectories with .raw.txt files in ",batch_path)}
+
+  # clean
+  all_raw_files = sapply(all_raw_files,function(x){gsub("//","/",x)})
+
+  # TODO: need to rework below part:
+  # sample_ids = sapply(all_tbk_files,function(x,n=0){base::strsplit(x,split="/")[[1]][length(strsplit(x,split="/")[[1]])-n]},n = nval)
+  #
+  # # format input folders:
+  # input_folders = sapply(all_tbk_files,function(x,n=1){paste0(base::strsplit(x,split="/")[[1]][1:(length(strsplit(x,split="/")[[1]])-n)],collapse = "/")})
+  # input_folders = sapply(input_folders,function(x){paste0(x,"/")})
+  # names(input_folders) = sample_ids
+  #
+
+  # init progress
+  if(showProgress){ progress_bar = txtProgressBar(min = 0, max = length(input_folders), initial = 0)}
+
+  # iterate over all samples:
+  fiber_sample_list = list()
+  # save them in batch_output_path using the same folder structure as found in batch_path
+  for(i in 1:length(input_folders)){
+
+    # read:
+    fiber_sample_list[[i]] = load_fibeR(input_path = input_folders[i],
+                                        sample_id = names(input_folders)[i])
+    # TODO: fiber_sample_list[[i]]$folder_name = output_folders[i]
+    # update progress
+    if(showProgress){ setTxtProgressBar(progress_bar,i) }
+  }
+
+
+  return(fiber_sample_list)
+
+}
+
 ##########
 ### save_fibeR
 ##########
@@ -157,6 +286,54 @@ save_fibeR = function(fibeR_data, output_path){
     file_name = paste0(file_name_prefix,".",df_to_write,".txt")
     data.table::fwrite(fibeR_data[[df_to_write]],file = file_name,sep = "\t")
   }
+}
+
+
+##########
+### save_fibeR_batch
+##########
+
+#' Batch save a list of fibeR_data objects
+#'
+#' Wrapper around save_fibeR to save a list of fibeR_data objects
+#'
+#' @param fibeR_list a list of fibeR_data objects to save
+#' @param batch_output_path the full path to the top level directory
+#' @param showProgress logical. Whether to display progress bar
+#' @param verbose logical. Whther to print  messages
+#' @return list of fibeR_data objects
+#'
+#' @export
+#'
+#' @importFrom data.table fread
+#'
+#'
+
+save_fibeR_batch = function(fibeR_list,batch_output_path, showProgress = TRUE, verbose =FALSE){
+
+  # make path
+  system(paste0("mkdir -p ",batch_output_path))
+  # init progress
+  if(showProgress){ progress_bar = txtProgressBar(min = 0, max = length(fibeR_list), initial = 0)}
+  # iterate over all samples:
+  fiber_sample_list = list()
+  # save them in batch_output_path using the same folder structure as found in batch_path
+  for(i in 1:length(fibeR_list)){
+
+    fibeR_sample = fibeR_list[[i]]
+    if(!is.null(fibeR_sample$folder_name)){
+      full_path = paste0(batch_output_path,"/",fibeR_sample$folder_name[1],"/")
+      system(paste0("mkdir -p ",full_path))
+    }else{
+      full_path = batch_output_path
+    }
+    full_path = gsub("//","/",full_path)
+    # save:
+    fiber_sample_list[[i]] = save_fibeR(fibeR_sample,full_path)
+    # update progress
+    if(showProgress){ setTxtProgressBar(progress_bar,i) }
+  }
+  return(fiber_sample_list)
 }
 
 ##########
@@ -407,5 +584,48 @@ process_fibeR = function(fibeR_input,name_signal = "x465A",name_control = "x405A
   if(verbose){message("Processing complete.")}
   # return
   return(fibeR_input)
+
+}
+
+
+##########
+### process_fibeR_batch
+##########
+
+#' Batch save a list of fibeR_data objects
+#'
+#' Wrapper around save_fibeR to save a list of fibeR_data objects
+#'
+#' @param fibeR_list a list of fibeR_data objects to save
+#' @param showProgress logical. Whether to display progress bar
+#' @param verbose logical. Whther to print  messages
+#' @return list of fibeR_data objects
+#'
+#' @export
+#'
+#' @importFrom data.table fread
+#'
+
+process_fibeR_batch = function(fibeR_list,showProgress =TRUE,verbose=FALSE){
+
+  if(showProgress){ progress_bar = txtProgressBar(min = 0, max = length(fibeR_list), initial = 0)}
+  # iterate over all samples:
+  fiber_sample_list = list()
+  # save them in batch_output_path using the same folder structure as found in batch_path
+  for(i in 1:length(fibeR_list)){
+
+    # get sample
+    fibeR_sample = fibeR_list[[i]]
+    # process:
+    fiber_sample_list[[i]] = save_fibeR(fibeR_sample,full_path)
+
+    # optionally plot:
+
+
+    # update progress
+    if(showProgress){ setTxtProgressBar(progress_bar,i) }
+
+  }
+  return(fiber_sample_list)
 
 }
