@@ -102,7 +102,7 @@ str(fiber_sample)
 #>  - attr(*, "class")= chr "fibeR_data"
 ```
 
-## Import a TDT sample
+## Process a TDT sample
 
 We can then process the sample. This mostly includes calculation of dFF.
 For most dFF calculations we require an intervention time point to
@@ -324,9 +324,6 @@ plot_fibeR(fiber_sample_list[["2004BRA0015104-210420-142141"]],datatype = "raw",
 
 <img src="man/figures/README-unnamed-chunk-16-1.png" width="100%" />
 
-Which happens to look a bit weird with the control and signal differing
-mostly.
-
 ## Plot all samples
 
 ### Align samples
@@ -360,7 +357,7 @@ suppressWarnings(print(plot_aligned_fibeR(aligned_dFF))) # calling plot_aligned_
 
 <img src="man/figures/README-unnamed-chunk-18-1.png" width="100%" />
 
-### Adding mean and variance (lines)
+### Adding mean and standard deviation (lines)
 
 It might also be desirable to plot the mean and standard deviation
 (especially in real world scenarios with more than 3 samples).
