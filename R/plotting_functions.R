@@ -178,12 +178,14 @@ plot_fibeR = function(fibeR_data,datatype = "raw",split_plots = TRUE, datatype_b
 #' @importFrom tidyr gather
 #' @importFrom dplyr group_by mutate
 #' @importFrom rlang sym
-#' @importFrom grDevices colorRamp palette.colors
+#' @importFrom grDevices colorRamp
 #' @importFrom stats sd
 #'
 
 
 plot_aligned_fibeR = function(aligned_fibeR,summary_stat = FALSE,summary_color = "#009E73",yaxis_label = "dFF",linesize = 0.3, min_yaxis_dFF = 0.2,add_hline = TRUE,add_vline = TRUE, text_size_param = 15){
+
+  okabe_to_palette = c("#000000","#E69F00","#56B4E9","#009E73","#F0E442","#0072B2","#D55E00","#CC79A7","#999999")
 
   # check ncols
 
@@ -215,7 +217,7 @@ plot_aligned_fibeR = function(aligned_fibeR,summary_stat = FALSE,summary_color =
 
   # color:
   if(!summary_stat){
-    getOkabeItoPalette = grDevices::colorRampPalette(palette.colors(palette = "Okabe-Ito"))
+    getOkabeItoPalette = grDevices::colorRampPalette(okabe_to_palette)
     p1 = p1+scale_color_manual(values=getOkabeItoPalette(max(ncol(aligned_fibeR),9)))
   }
 
