@@ -6,14 +6,19 @@
 <!-- badges: start -->
 <!-- badges: end -->
 
-Fiber photometry processing and data analysis
+Fiber photometry processing and data analysis.
+
+This package is designed to process fiber Photometry data from the
+Max-Planck-Institute (MPI) for metabolism research.
 
 # Installation
 
 Install fibeR using:
 
 ``` r
-devtools::install_github("lsteuernagel/fibeR")
+if (!require("remotes", quietly = TRUE))
+    install.packages("remotes")
+remotes::install_github("lsteuernagel/fibeR")
 ```
 
 Check whether fibeR can be loaded:
@@ -22,10 +27,28 @@ Check whether fibeR can be loaded:
 library(fibeR)
 ```
 
+**Important:**
+
+-   All import functions are designed to work with data from
+    [TDT](https://www.tdt.com/system/fiber-photometry-system/).
+
+-   fibeR uses the [MATLAB Offline Analysis
+    Tools](https://www.tdt.com/docs/sdk/offline-data-analysis/offline-data-matlab/overview/)
+    from TDT to import data. (A full copy of the SDK is shipped with
+    this package).
+
+-   This means a Matlab installation on your system is required! And has
+    to be specified via ‘matlab_path’ in the import_fibeR /
+    import_fibeR_batch functions.
+
+-   All function defaults and example data paths in the readme are set
+    to MPI standards.
+
 # Quick start (one sample)
 
 ``` r
-sample_path =   "/beegfs/v0/labnet-data/calcium/cbauder/BAU0000444100620-200610-173408/" # add your own path
+library(fibeR)
+sample_path =   "/beegfs/scratch/bruening_scratch/lsteuernagel/data/fiberPhotometry/example_data/BAU0000444100620-200610-173408/" # add your own path
 fiber_sample = import_fibeR(input_path = sample_path,verbose =FALSE)
 fiber_sample = process_fibeR(fiber_sample,start_note = 2,correct_with_control=TRUE,verbose =FALSE) # specify the intervention note, typically 2 (1 being the start of recording)
 plot_fibeR(fiber_sample,datatype = "decay") # use 'raw' to get raw data plot
@@ -46,7 +69,8 @@ faster in the next session (because Matlab and downsampling are
 skipped).
 
 ``` r
-batch_sample_path =   "/beegfs/v0/labnet-data/calcium/cbauder/2021_04_20/" # add your own path
+library(fibeR)
+batch_sample_path =   "/beegfs/scratch/bruening_scratch/lsteuernagel/data/fiberPhotometry/example_data/2021_04_20/" # add your own path
 batch_sample_output_path = "/beegfs/scratch/bruening_scratch/lsteuernagel/data/fiberPhotometry/testexport/readme/" # change to your own path on scratch
 fiber_sample_list = import_fibeR_batch(batch_path = batch_sample_path,batch_output_path = batch_sample_output_path,showProgress = FALSE) # set showProgress = TRUE !
 fiber_sample_list = process_fibeR_batch(fiber_sample_list,start_note_all = 2,showProgress = FALSE) # specify the intervention note, typically 2 (1 being the start of recording)
@@ -74,7 +98,7 @@ loading from an existing (cached) file. When running this yourself for
 the first time (for each sample), it will run Matlab.
 
 ``` r
-sample_path =  "/beegfs/v0/labnet-data/calcium/cbauder/BAU0000444100620-200610-173408/"
+sample_path =  "/beegfs/scratch/bruening_scratch/lsteuernagel/data/fiberPhotometry/example_data/BAU0000444100620-200610-173408/"
 fiber_sample = import_fibeR(input_path = sample_path)
 #> import_fibeR: Using last subfolder as id: BAU0000444100620-200610-173408
 #> export_tdt: Found existing export file for this id in outputpath. Not running Matlab. Set return_cached to FALSE to overwrite this behavior.
@@ -258,7 +282,7 @@ skipped).
 Similar to quick start:
 
 ``` r
-batch_sample_path =   "/beegfs/v0/labnet-data/calcium/cbauder/2021_04_20/" # add your own path
+batch_sample_path =   "/beegfs/scratch/bruening_scratch/lsteuernagel/data/fiberPhotometry/example_data/2021_04_20/" # add your own path
 batch_sample_output_path = "/beegfs/scratch/bruening_scratch/lsteuernagel/data/fiberPhotometry/testexport/readme/" # change to your own path on scratch
 fiber_sample_list = import_fibeR_batch(batch_path = batch_sample_path,batch_output_path = batch_sample_output_path)
 #>   |                                                                              |                                                                      |   0%  |                                                                              |=======================                                               |  33%  |                                                                              |===============================================                       |  67%  |                                                                              |======================================================================| 100%
@@ -303,7 +327,7 @@ str(single_sample)
 #>   ..$ text     : chr [1:4] "start" "start food" "end food" "stop"
 #>   ..$ note_time: int [1:4] 0 901 924 2703
 #>  $ folder_name         : Named chr "2004BRA0015104-210420-142141"
-#>   ..- attr(*, "names")= chr "/beegfs/v0/labnet-data/calcium/cbauder/2021_04_20//2004BRA0015104-210420-142141/Exp_corinna-200528-115116_2004B"| __truncated__
+#>   ..- attr(*, "names")= chr "/beegfs/scratch/bruening_scratch/lsteuernagel/data/fiberPhotometry/example_data/2021_04_20//2004BRA0015104-2104"| __truncated__
 #>  $ intervention_seconds: int 901
 #>  $ baseline.data       :'data.frame':    2731 obs. of  7 variables:
 #>   ..$ time                  : num [1:2731] 10.8 11.8 12.8 13.8 14.7 ...
@@ -423,6 +447,36 @@ names(reloaded_sample_list)
 ```
 
 This is useful to save the processing results for a later session.
+
+# Details on processing and dFF
+
+Will be extended in the future.
+
+Calculation of delta F over F (dFF)
+
+Briefly: There are currently three different approaches implemented:
+
+-   **decay**: Using an exponential decay estimation of the baseline
+    based on a [power-like
+    model](https://www.sciencedirect.com/science/article/pii/S0006349503745032?via%3Dihub).
+    Only the data until intervention is used to estimate the model
+    parameters. dFF is then calculated by subtracting and dividing an
+    extrapolated (predicted) baseline from the actual signal. The signal
+    dFF can be motion-corrected by subtraction from the control dFF or
+    the isosbestic control can be discarded if bleed-over from the
+    signal is a problem (set correct_with_control in process_fibeR to
+    FALSE). If model fitting failed it falls back to ‘median’
+
+-   **median**: Using the median of the pre-intervention data as
+    baseline to calculate dFF similar to ‘decay’ above.
+
+-   **fit**: The method suggest by [Lerner et
+    al.](https://www.biorxiv.org/content/10.1101/2021.07.15.452555v1.full).
+    Quote: “A fitted control channel is obtained by fitting the control
+    channel to signal channel using a least squares polynomial fit of
+    degree 1. dFF is computed by subtracting the fitted control channel
+    from the signal channel, and dividing by the fitted control channel”
+    Implemented using lm in R.
 
 # Details on Matlab and caching
 
