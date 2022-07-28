@@ -70,7 +70,7 @@ export_tdt = function(path, id,return_cached = TRUE, outputpath = tempdir(),matl
     if(export_full){matlab_fun = "tdt_export"}else{matlab_fun ="tdt_export_small"}
     #define command:
     command = as.character(paste0(matlab_path,
-                                  " -nodisplay -nojvm -r \"cd '",matlab_fun_path,"/'; try ",matlab_fun,"('",
+                                  " -nodisplay -nodesktop -nojvm -r \"cd '",matlab_fun_path,"/'; try ",matlab_fun,"('",
                                   paste0(path),"','",
                                   outputpath,"','",
                                   tdt_lib_path,"','",

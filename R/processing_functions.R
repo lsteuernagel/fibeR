@@ -175,15 +175,15 @@ fit_decay_power = function(data,smooth_with_butter = TRUE,pct_fallback = 0.2,b_v
       if(verbose >=2){message("Retrying model fit with new start and end points")}
       # set start point to max value
       max_first = max(data_forfit$y[1:max(1,floor(length(data_forfit$x)*pct_fallback))])
-      if(verbose >=2){message("using max_first: ",which(data_forfit$y==max_first)," ",max_first)}
+      if(verbose >=2){message("using max_first: ",which(data_forfit$y==max_first)[1]," ",max_first)}
       # set end point to min value
       min_last =  min((data_forfit$y[max(1,floor(length(data_forfit$x)*(1-pct_fallback))):length(data_forfit$x)]))
-      if(verbose >=2){message("using minlst: ",which(data_forfit$y==min_last)," ",min_last)}
+      if(verbose >=2){message("using minlst: ",which(data_forfit$y==min_last)[1]," ",min_last)}
       # add points to plot
-      if(verbose >=3){print(graphics::points(x=c(which(data_forfit$y==max_first),which(data_forfit$y==min_last)),y=c(max_first,min_last),col="red",pch=21))}
+      if(verbose >=3){print(graphics::points(x=c(which(data_forfit$y==max_first)[1],which(data_forfit$y==min_last)[1]),y=c(max_first,min_last),col="red",pch=21))}
       # cut down data
-      data_forfit = data_forfit[1:which(data_forfit$y==min_last),]
-      data_forfit = data_forfit[which(data_forfit$y==max_first):nrow(data_forfit),]
+      data_forfit = data_forfit[1:which(data_forfit$y==min_last)[1],]
+      data_forfit = data_forfit[which(data_forfit$y==max_first)[1]:nrow(data_forfit),]
       # try again
       fit = stats::nls(formula = formula_model,data = data_forfit,start = starting_values_model)
       fit
