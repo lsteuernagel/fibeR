@@ -684,9 +684,11 @@ align_fibeR = function(fibeR_list, columns_to_align = c("decay"), input_data_nam
     }else{
       data_as_input = fiber_sample[[input_data_name]] %>% as.data.frame()
     }
+    # if data frame is empty: skip
+    if(nrow(data_as_input) < 5){next}
+
     # reduce to valid columns
     if( input_data_name == "process.data"){
-      # update color_vector
       columns_to_align_sample[! columns_to_align_sample %in% c("signal","control")] = paste0("dFF_",columns_to_align_sample[!columns_to_align_sample%in% c("signal","control")])
     }
     columns_to_align_sample = columns_to_align_sample[columns_to_align_sample %in% colnames(data_as_input)]
