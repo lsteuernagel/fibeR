@@ -13,7 +13,8 @@ plot_aligned_fibeR(
   min_yaxis_dFF = 0.2,
   add_hline = TRUE,
   add_vline = TRUE,
-  text_size_param = 15
+  text_size_param = 15,
+  sd_alpha = 0.2
 )
 }
 \arguments{
@@ -34,6 +35,8 @@ plot_aligned_fibeR(
 \item{add_vline}{logical. If TRUE a grey line is added at y=intervention_time}
 
 \item{text_size_param}{the ggplot text size. defaults to 15}
+
+\item{sd_alpha}{alpha value for sd band}
 }
 \value{
 ggplot object

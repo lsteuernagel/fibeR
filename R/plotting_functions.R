@@ -169,6 +169,7 @@ plot_fibeR = function(fibeR_data,datatype = "raw",split_plots = TRUE, datatype_b
 #' @param summary_stat logical. If TRUE: plot mean and sd instead of individual lines
 #' @param summary_color color for mean and sd
 #' @param yaxis_label label for yaxis
+#' @param sd_alpha alpha value for sd band
 #' @inheritParams plot_fibeR
 #' @return ggplot object
 #'
@@ -183,7 +184,7 @@ plot_fibeR = function(fibeR_data,datatype = "raw",split_plots = TRUE, datatype_b
 #'
 
 
-plot_aligned_fibeR = function(aligned_fibeR,summary_stat = FALSE,summary_color = "#009E73",yaxis_label = "dFF",linesize = 0.3, min_yaxis_dFF = 0.2,add_hline = TRUE,add_vline = TRUE, text_size_param = 15){
+plot_aligned_fibeR = function(aligned_fibeR,summary_stat = FALSE,summary_color = "#009E73",yaxis_label = "dFF",linesize = 0.3, min_yaxis_dFF = 0.2,add_hline = TRUE,add_vline = TRUE, text_size_param = 15,sd_alpha = 0.2){
 
   okabe_to_palette = c("#000000","#E69F00","#56B4E9","#009E73","#F0E442","#0072B2","#D55E00","#CC79A7","#999999")
 
@@ -200,8 +201,8 @@ plot_aligned_fibeR = function(aligned_fibeR,summary_stat = FALSE,summary_color =
   }else{
     aligned_fibeR_long = aligned_fibeR_long %>% dplyr::group_by(time) %>% dplyr::mutate(mean = mean(value,na.rm =TRUE), sd = stats::sd(value,na.rm =TRUE))
     p1 = ggplot(data = aligned_fibeR_long, aes(x = time, group = sample)) +
-      geom_line(aes(y = mean),color= summary_color)+
-      geom_ribbon(aes(y = mean, ymin = mean - sd, ymax = mean + sd),fill = summary_color,alpha = 0.2)
+      geom_line(aes(y = mean),color= summary_color,size=linesize)+
+      geom_ribbon(aes(y = mean, ymin = mean - sd, ymax = mean + sd),fill = summary_color,alpha = sd_alpha)
   }
 
   # finalize plot:
