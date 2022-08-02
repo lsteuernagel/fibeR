@@ -493,8 +493,8 @@ process_fibeR = function(fibeR_input,name_signal = "x465A",name_control = "x405A
   # go over all approaches:
 
   ## get the median baseline for signal dFF:
-  median_signal_baseline = stats::median(process.data[process.data$time_from_intervention > 0, name_signal])
-  median_control_baseline = stats::median(process.data[process.data$time_from_intervention > 0, name_control])
+  median_signal_baseline = stats::median(process.data[process.data$time_from_intervention < 0, name_signal])
+  median_control_baseline = stats::median(process.data[process.data$time_from_intervention < 0, name_control])
 
   # make df with base line info
   baseline.data = process.data[,1:2]
