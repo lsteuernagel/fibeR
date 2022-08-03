@@ -145,6 +145,7 @@ parseNotes = function(lines_from_notes,expected_id="",verbose=TRUE){
 #' @param id The id that will be used to name the export file. Typically should be also in the input file name but does not have to !
 #' @param outputpath Where to store the data. Defaults to temp dir of session
 #' @param verbose whether to print messages
+#' @param return_cached don't overwrite existing files
 #' @return filename of notes file as character string
 #'
 #' @export
@@ -154,18 +155,22 @@ parseNotes = function(lines_from_notes,expected_id="",verbose=TRUE){
 #'
 #'
 
-export_Notes = function(path,id, outputpath = tempdir(),verbose=TRUE){
+export_Notes = function(path,id, outputpath = tempdir(),verbose=TRUE, return_cached = TRUE){
 
   if(!base::dir.exists(outputpath)){stop("Cannot find outputpath!")}
   if(!base::dir.exists(path)){stop("Cannot find path (input data)!")}
   path = gsub("//","/",paste0(path,"/"))
   # notes
   if(file.exists(paste0(c(path,"Notes.txt"),collapse = ""))){
-    if(verbose){message(paste0("export_Notes: Exporting notes "))}
-    lines_from_notes=readLines(paste0(c(path,"Notes.txt"),collapse = ""))
-    notes_parsed = parseNotes(lines_from_notes,id,verbose=verbose)
     notes_out_file =  paste0(c(outputpath,id,"_notes_parsed.txt"),collapse = "")
-    data.table::fwrite(notes_parsed,file = notes_out_file,sep="\t")
+    if(return_cached & file.exists(notes_out_file)){
+      if(verbose){message("export_tdt: Found existing note file for this id in outputpath. Not overwriting. Set return_cached to FALSE to overwrite this behavior.")}
+    }else{
+      if(verbose){message(paste0("export_Notes: Exporting notes "))}
+      lines_from_notes=readLines(paste0(c(path,"Notes.txt"),collapse = ""))
+      notes_parsed = parseNotes(lines_from_notes,id,verbose=verbose)
+      data.table::fwrite(notes_parsed,file = notes_out_file,sep="\t")
+    }
   }else{
     stop("Cannot find notes file in path.")
   }

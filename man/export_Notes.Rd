@@ -4,7 +4,13 @@
 \alias{export_Notes}
 \title{Export Notes file to table formatted .txt file.}
 \usage{
-export_Notes(path, id, outputpath = tempdir(), verbose = TRUE)
+export_Notes(
+  path,
+  id,
+  outputpath = tempdir(),
+  verbose = TRUE,
+  return_cached = TRUE
+)
 }
 \arguments{
 \item{path}{The full paths to the binary files}
@@ -14,6 +20,8 @@ export_Notes(path, id, outputpath = tempdir(), verbose = TRUE)
 \item{outputpath}{Where to store the data. Defaults to temp dir of session}
 
 \item{verbose}{whether to print messages}
+
+\item{return_cached}{don't overwrite existing files}
 }
 \value{
 filename of notes file as character string
