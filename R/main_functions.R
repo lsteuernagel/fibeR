@@ -147,11 +147,17 @@ import_fibeR_batch = function(batch_path, batch_output_path = paste0(tempdir(),"
     # and create
     system(paste0("mkdir -p ",output_folders_full[i]))
     # read:
-    fiber_sample_list[[i]] = import_fibeR(input_path = input_folders[i],
-                                          sample_id = names(input_folders)[i],
-                                          outputpath = output_folders_full[i],
-                                          verbose = verbose,
-                                          ... )
+    fiber_sample_list[[i]] = tryCatch({
+      import_fibeR(input_path = input_folders[i],
+                   sample_id = names(input_folders)[i],
+                   outputpath = output_folders_full[i],
+                   verbose = verbose,
+                   ... )
+    },
+    error=function(cond) {
+      message("Error while importing sample : ",names(input_folders)[i],". Skipping . Error message: ",cond)
+      return(NULL)
+    })
     fiber_sample_list[[i]]$folder_name = output_folders[i]
     names(fiber_sample_list)[i] = fiber_sample_list[[i]]$id
     # update progress
