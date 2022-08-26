@@ -19,14 +19,15 @@ function tdt_export_small(inputpath,outputpath,sdkpath,id,names,N)
       raw.streams.(names{c}).data = arrayfun(@(i)mean(raw.streams.(names{c}).data(i:i+N-1)),1:N:length(raw.streams.(names{c}).data)-N+1);
     end
     % save:
-    nSamples2 = numel(raw.streams.(names{1}).data);
+    nSamples2 = min(numel(raw.streams.(names{1}).data),numel(raw.streams.(names{2}).data));
     data = NaN(nSamples2, nChannels + 1);
     for c = 1:nChannels
-       data(:, c + 1) = double(raw.streams.(names{c}).data);
+       data(:, c + 1) = double(raw.streams.(names{c}).data(1:nSamples2));
     end
     %Decimate time array and match length to demodulated stream
     time = time(1:N:end);
-    time = time(1:length(raw.streams.(names{c}).data));
+   % time = time(1:length(raw.streams.(names{c}).data));
+    time = time(1:nSamples2);
     data(:, 1) = double(time);
     % write to file
     out = strcat(outputpath,id,'_export_small.txt');

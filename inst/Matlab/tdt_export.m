@@ -9,11 +9,11 @@ function tdt_export(inputpath,outputpath,sdkpath,id,names,N)
     raw = TDTbin2mat(inputpath);
     frequency = raw.streams.(names{1}).fs;
     time = (1:length(raw.streams.(names{1}).data))/raw.streams.(names{1}).fs;
-    nSamples = numel(raw.streams.(names{1}).data);
+    nSamples = min(numel(raw.streams.(names{1}).data),numel(raw.streams.(names{2}).data));
     nChannels = numel(names);
     data = NaN(nSamples, nChannels + 1);
     for c = 1:nChannels
-        data(:, c + 1) = double(raw.streams.(names{c}).data);
+        data(:, c + 1) = double(raw.streams.(names{c}).data(1:nSamples));
     end
     data(:, 1) = double(transpose(1:nSamples) / frequency);
     % write to file

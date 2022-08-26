@@ -201,6 +201,7 @@ plot_aligned_fibeR = function(aligned_fibeR,summary_stat = FALSE,summary_color =
   }else{
     aligned_fibeR_long = aligned_fibeR_long %>% dplyr::group_by(time) %>% dplyr::mutate(mean = mean(value,na.rm =TRUE), sd = stats::sd(value,na.rm =TRUE))
     p1 = ggplot(data = aligned_fibeR_long, aes(x = time, group = sample)) +
+      ylim(c(min(-1*min_yaxis_dFF,min(aligned_fibeR_long$value,na.rm = TRUE)*1.1),max(min_yaxis_dFF,max(aligned_fibeR_long$value,na.rm = TRUE)*1.1))) +
       geom_line(aes(y = mean),color= summary_color,size=linesize)+
       geom_ribbon(aes(y = mean, ymin = mean - sd, ymax = mean + sd),fill = summary_color,alpha = sd_alpha)
   }

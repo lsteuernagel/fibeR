@@ -142,6 +142,9 @@ import_fibeR_batch = function(batch_path, batch_output_path = paste0(tempdir(),"
   fiber_sample_list = list()
   # save them in batch_output_path using the same folder structure as found in batch_path
   for(i in 1:length(input_folders)){
+    # clean up path:
+    output_folders_full[i] = gsub(" ","_",output_folders_full[i])
+    # and create
     system(paste0("mkdir -p ",output_folders_full[i]))
     # read:
     fiber_sample_list[[i]] = import_fibeR(input_path = input_folders[i],
