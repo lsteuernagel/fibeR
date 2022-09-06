@@ -457,7 +457,7 @@ process_fibeR = function(fibeR_input,name_signal = "x465A",name_control = "x405A
 
   # get notes:
   notes = fibeR_input$notes
-  rownames(notes) = notes$text
+  rownames(notes) = make.unique(notes$text)
   # check if start node can be found
   if(nrow(notes)<=2){
     if(verbose){message("Notes are empty or only contain start and end time. Using intervention_second_fallback.")}
