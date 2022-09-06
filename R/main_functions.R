@@ -41,11 +41,21 @@ import_fibeR = function(input_path, sample_id = NULL,id_infererence="pathname", 
   if(is.null(sample_id)){
     if(id_infererence=="pathname"){
       sample_id = base::strsplit(input_path,split="/")[[1]][length(strsplit(input_path,split="/")[[1]])]
-      if(verbose){message("import_fibeR: Using last subfolder as id: ",sample_id)}
+      if(sample_id != ""){
+        if(verbose){message("import_fibeR: Using last subfolder as id: ",sample_id)}
+      }else{
+        sample_id = gsub(".Tbk","",tbk_file[1])
+        if(verbose){message("import_fibeR: Cannot infer from pathname. trying tbk file instead: ",sample_id)}
+      }
     }else if(id_infererence=="tbkfile"){
       # get from tbk file name
       sample_id = gsub(".Tbk","",tbk_file[1])
-      if(verbose){message("import_fibeR: Using tbk file name as id: ",sample_id)}
+      if(sample_id != ""){
+        if(verbose){message("import_fibeR: Using tbk file name as id: ",sample_id)}
+      }else{
+        sample_id = base::strsplit(input_path,split="/")[[1]][length(strsplit(input_path,split="/")[[1]])]
+        if(verbose){message("import_fibeR: Cannot infer from tbk file. trying subfolder name instead: ",sample_id)}
+      }
     }else{
       sample_id = paste0("id_",sample(1:100000000,1))
       if(verbose){message("import_fibeR: Using random number as id: ",sample_id)}
@@ -147,19 +157,23 @@ import_fibeR_batch = function(batch_path, batch_output_path = paste0(tempdir(),"
     # and create
     system(paste0("mkdir -p ",output_folders_full[i]))
     # read:
-    fiber_sample_list[[i]] = tryCatch({
-      import_fibeR(input_path = input_folders[i],
-                   sample_id = names(input_folders)[i],
-                   outputpath = output_folders_full[i],
-                   verbose = verbose,
-                   ... )
+    tmp_value = tryCatch({
+      import_res = import_fibeR(input_path = input_folders[i],
+                                sample_id = names(input_folders)[i],
+                                outputpath = output_folders_full[i],
+                                verbose = verbose,
+                                ... )
+      import_res
     },
     error=function(cond) {
       message("Error while importing sample : ",names(input_folders)[i],". Skipping . Error message: ",cond)
-      return(NULL)
-    })
-    fiber_sample_list[[i]]$folder_name = output_folders[i]
-    names(fiber_sample_list)[i] = fiber_sample_list[[i]]$id
+      return("ERROR")
+    })#
+    if(tmp_value != "ERROR"){
+      fiber_sample_list[[i]] = tmp_value
+      fiber_sample_list[[i]]$folder_name = output_folders[i]
+      names(fiber_sample_list)[i] = fiber_sample_list[[i]]$id
+    }
     # update progress
     if(showProgress){ setTxtProgressBar(progress_bar,i) }
   }
@@ -296,6 +310,9 @@ save_fibeR = function(fibeR_data, output_path){
   for(i in 1:length(parts_to_write)){
     df_to_write = parts_to_write[i]
     file_name = paste0(file_name_prefix,".",df_to_write,".txt")
+    # ensure that file name is not completely broken
+    file_name = gsub(" |\\+","_",file_name)
+    file_name = gsub("\\\n","",file_name)
     data.table::fwrite(fibeR_data[[df_to_write]],file = file_name,sep = "\t")
   }
 }
@@ -341,7 +358,13 @@ save_fibeR_batch = function(fibeR_list,batch_output_path, showProgress = TRUE, v
     }
     full_path = gsub("//","/",full_path)
     # save:
-    fiber_sample_list[[i]] = save_fibeR(fibeR_sample,full_path)
+    tryCatch({
+      save_fibeR(fibeR_sample,full_path)
+    },
+    error=function(cond) {
+      message("Cannot save_fibeR. Skipping . Error:",cond)
+      return(NA)
+    })
     # update progress
     if(showProgress){ setTxtProgressBar(progress_bar,i) }
   }
@@ -629,13 +652,20 @@ process_fibeR_batch = function(fibeR_list,showProgress =TRUE,start_note_all = 2,
     # get sample
     fiber_sample = fibeR_list[[i]]
     # process:
-    fibeR_list[[i]] = process_fibeR(fiber_sample,
-                                    start_note = start_note_all,
-                                    verbose=verbose,
-                                    ...)
-
-    # optionally plot:
-    # TODO
+    tmp_value = tryCatch({
+      process_res = process_fibeR(fiber_sample,
+                                  start_note = start_note_all,
+                                  verbose=verbose,
+                                  ...)
+      process_res
+    },
+    error=function(cond) {
+      message("Error while processing sample : ",fiber_sample$id,". Skipping . Error message: ",cond)
+      return("ERROR")
+    })#
+    if(tmp_value != "ERROR"){
+      fibeR_list[[i]] = tmp_value
+    }
 
     # update progress
     if(showProgress){ setTxtProgressBar(progress_bar,i) }
