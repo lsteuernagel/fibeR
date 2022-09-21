@@ -75,26 +75,41 @@ import_fibeR = function(input_path, sample_id = NULL,id_infererence="pathname", 
                                       verbose =verbose)
 
   # execute note export:
-  export_tdt_note_file = export_Notes(path = input_path,
-                                      id = sample_id,
-                                      outputpath = outputpath,
-                                      verbose=verbose)
+  export_tdt_note_file = tryCatch({
+    export_tdt_note_file = export_Notes(path = input_path,
+                                        id = sample_id,
+                                        outputpath = outputpath,
+                                        verbose=verbose)
+    export_tdt_note_file
+  },
+  error=function(cond) {
+    #message("Error while writing notes : ",sample_id,". Skipping . Error message: ",cond)
+    return("NONOTES")
+  })
   # import results into R
-  raw.data = data.table::fread(export_tdt_result_file,header = FALSE,data.table = FALSE)
-  colnames(raw.data) = c("time",channel_names)
-  notes = data.table::fread(export_tdt_note_file,header = TRUE,data.table = FALSE)
+  if(file.exists(export_tdt_note_file)){
+    raw.data = data.table::fread(export_tdt_result_file,header = FALSE,data.table = FALSE)
+    colnames(raw.data) = c("time",channel_names)
+    if(file.exists(export_tdt_note_file)){
+      notes = data.table::fread(export_tdt_note_file,header = TRUE,data.table = FALSE)
+    }else{
+      notes = data.frame(note_id = 1, note_date = "", text = "notes are missing" , note_time = 0)
+    }
+    # make result list
+    fibeR_sample = list(
+      id = sample_id,
+      raw.data = raw.data,
+      process.data = NULL,
+      notes = notes
+    )
+    class(fibeR_sample) <- "fibeR_data"
 
-  # make result list
-  fibeR_sample = list(
-    id = sample_id,
-    raw.data = raw.data,
-    process.data = NULL,
-    notes = notes
-  )
-  class(fibeR_sample) <- "fibeR_data"
-
-  # return
-  return(fibeR_sample)
+    # return
+    return(fibeR_sample)
+  }else{
+    if(verbose){ message("Error: Cannot export data. Returning NULL")}
+    return(NULL)
+  }
 }
 
 ##########
@@ -169,6 +184,7 @@ import_fibeR_batch = function(batch_path, batch_output_path = paste0(tempdir(),"
       message("Error while importing sample : ",names(input_folders)[i],". Skipping . Error message: ",cond)
       return("ERROR")
     })#
+    if(is.null(tmp_value)){tmp_value = "ERROR"}
     if(tmp_value[1] != "ERROR"){
       fiber_sample_list[[i]] = tmp_value
       fiber_sample_list[[i]]$folder_name = output_folders[i]
@@ -573,12 +589,12 @@ process_fibeR = function(fibeR_input,name_signal = "x465A",name_control = "x405A
       predicted_signal_baseline_power = as.numeric(stats::predict(decay_power_model_signal,
                                                                   newdata=data.frame(x=process.data$time_from_intervention-min(process.data$time_from_intervention))))
       # check min_est_b_val
-    #  if(length(coef(decay_power_model_signal)["b"])>0){
-        if( coef(decay_power_model_signal)["b"] < min_est_b_val ){
-          if(verbose){message("Estimate exponetial decay of signal: b <  min_est_b_val. Defaulting to median")}
-          predicted_signal_baseline_power = median_signal_baseline
-        }
-   #   }
+      #  if(length(coef(decay_power_model_signal)["b"])>0){
+      if( coef(decay_power_model_signal)["b"] < min_est_b_val ){
+        if(verbose){message("Estimate exponetial decay of signal: b <  min_est_b_val. Defaulting to median")}
+        predicted_signal_baseline_power = median_signal_baseline
+      }
+      #   }
     }else{
       # if model failed: use median
       predicted_signal_baseline_power = median_signal_baseline
