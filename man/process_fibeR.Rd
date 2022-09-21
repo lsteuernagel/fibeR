@@ -19,8 +19,10 @@ process_fibeR(
   remove_intervals = FALSE,
   dff_method = c("decay", "median", "fit"),
   correct_with_control = TRUE,
+  smooth = TRUE,
   pct_fallback = 0.3,
-  b_val = 10
+  b_val = 10,
+  min_est_b_val = 0
 )
 }
 \arguments{
@@ -52,9 +54,13 @@ process_fibeR(
 
 \item{correct_with_control}{boolean (Default: TRUE): for median and decay: Subtract control to correct for motion artifcats}
 
+\item{smooth}{boolean: whether to smooth with low pass butter filter}
+
 \item{pct_fallback}{when the model fitting fails the data is restricted to the maximum within in the first pct_fallback \% (e.20\%) and the minimum in the last 20\%}
 
 \item{b_val}{manually defined starting value for formula: y ~ a*(1-(1-b)*(x/c))^(1/(1-b))}
+
+\item{min_est_b_val}{if the estimated bavlue is below this threshold fall back to median estimation. Defaults to 0, increase to avoid fits that are close to a linear model (and typically overestimate the decay)}
 }
 \value{
 Downsampled matrix with the first column being the time index and other columns being downsampled signals

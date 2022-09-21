@@ -169,7 +169,7 @@ import_fibeR_batch = function(batch_path, batch_output_path = paste0(tempdir(),"
       message("Error while importing sample : ",names(input_folders)[i],". Skipping . Error message: ",cond)
       return("ERROR")
     })#
-    if(tmp_value != "ERROR"){
+    if(tmp_value[1] != "ERROR"){
       fiber_sample_list[[i]] = tmp_value
       fiber_sample_list[[i]]$folder_name = output_folders[i]
       names(fiber_sample_list)[i] = fiber_sample_list[[i]]$id
@@ -404,6 +404,8 @@ save_fibeR_batch = function(fibeR_list,batch_output_path, showProgress = TRUE, v
 #' @param remove_intervals boolean (Default: FALSE): Tries to remove longer intervals where the laser was off and adjust the relative timeline by also cutting out this time
 #' @param dff_method vector of character strings: which method to use for dFF calculation. Supports three strings at the moment: "median","fit", "decay". Can provide any or all of them.
 #' @param correct_with_control boolean (Default: TRUE): for median and decay: Subtract control to correct for motion artifcats
+#' @param smooth boolean: whether to smooth with low pass butter filter
+#' @param min_est_b_val if the estimated bavlue is below this threshold fall back to median estimation. Defaults to 0, increase to avoid fits that are close to a linear model (and typically overestimate the decay)
 #' @inheritParams fit_decay_power
 #' @return Downsampled matrix with the first column being the time index and other columns being downsampled signals
 #'
@@ -416,7 +418,7 @@ save_fibeR_batch = function(fibeR_list,batch_output_path, showProgress = TRUE, v
 
 process_fibeR = function(fibeR_input,name_signal = "x465A",name_control = "x405A",downsample_data = FALSE,downsample_k=1000,verbose=TRUE,cutoff_start = 10,cutoff_end = 5,
                          start_note = 2,intervention_second_fallback = 600,reduce_for_comparability =FALSE,remove_intervals=FALSE,
-                         dff_method = c("decay","median","fit"),correct_with_control=TRUE, pct_fallback = 0.3, b_val = 10){
+                         dff_method = c("decay","median","fit"),correct_with_control=TRUE,smooth = TRUE, pct_fallback = 0.3, b_val = 10,min_est_b_val = 0){
 
   # check if input is fibeR_data
   if(!is(fibeR_input,"fibeR_data")){
@@ -563,32 +565,46 @@ process_fibeR = function(fibeR_input,name_signal = "x465A",name_control = "x405A
     if(verbose){message("dFF: Estimate exponetial decay")}
     ## get the decay baseline for signal dFF:
     decay_power_model_signal = fit_decay_power(process.data[process.data$time_from_intervention < 0, name_signal],
-                                               smooth_with_butter=TRUE,
-                                               b_val = 10,
+                                               smooth_with_butter=smooth,
+                                               b_val = b_val,
                                                verbose = 0,
-                                               pct_fallback = 0.3)$fit_model %>% suppressMessages()
+                                               pct_fallback = pct_fallback)$fit_model %>% suppressMessages()
     if(length(decay_power_model_signal)>0){
       predicted_signal_baseline_power = as.numeric(stats::predict(decay_power_model_signal,
                                                                   newdata=data.frame(x=process.data$time_from_intervention-min(process.data$time_from_intervention))))
+      # check min_est_b_val
+    #  if(length(coef(decay_power_model_signal)["b"])>0){
+        if( coef(decay_power_model_signal)["b"] < min_est_b_val ){
+          if(verbose){message("Estimate exponetial decay of signal: b <  min_est_b_val. Defaulting to median")}
+          predicted_signal_baseline_power = median_signal_baseline
+        }
+   #   }
     }else{
       # if model failed: use median
       predicted_signal_baseline_power = median_signal_baseline
     }
+
     # calculate relative
     signal_relative_decay_power = (process.data[, name_signal]-predicted_signal_baseline_power)/predicted_signal_baseline_power
 
     ## get the decay_power baseline for control dFF:
     decay_power_model_control =fit_decay_power(process.data[process.data$time_from_intervention < 0, name_control],
-                                               smooth_with_butter=TRUE,
-                                               b_val = 10,
+                                               smooth_with_butter=smooth,
+                                               b_val = b_val,
                                                verbose = 0,
-                                               pct_fallback = 0.3)$fit_model %>% suppressMessages()
+                                               pct_fallback = pct_fallback)$fit_model %>% suppressMessages()
     if(length(decay_power_model_control)>0){
       if(length(predicted_signal_baseline_power)==1){
         predicted_control_baseline_power = median_control_baseline # if signal failed, also use median here
       }else{
         predicted_control_baseline_power = as.numeric(stats::predict(decay_power_model_control,
                                                                      newdata=data.frame(x=process.data$time_from_intervention-min(process.data$time_from_intervention))))
+      }
+      # check min_est_b_val
+      if( coef(decay_power_model_control)["b"] < min_est_b_val ){
+        if(verbose){message("Estimate exponetial decay of control: b <  min_est_b_val. Defaulting to median")}
+        predicted_signal_baseline_power = median_signal_baseline
+        predicted_signal_baseline_power = median_signal_baseline   # use median for signal as well
       }
     }else{
       # if model failed: use median
@@ -663,7 +679,7 @@ process_fibeR_batch = function(fibeR_list,showProgress =TRUE,start_note_all = 2,
       message("Error while processing sample : ",fiber_sample$id,". Skipping . Error message: ",cond)
       return("ERROR")
     })#
-    if(tmp_value != "ERROR"){
+    if(tmp_value[1] != "ERROR"){
       fibeR_list[[i]] = tmp_value
     }
 
