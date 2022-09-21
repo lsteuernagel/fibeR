@@ -1,6 +1,6 @@
 Package: fibeR
 Title: Fiber photometry processing and analysis with R
-Version: 0.0.1
+Version: 0.0.2
 Authors@R: 
     person("Lukas", "Steuernagel", , "first.last@example.com", role = c("aut", "cre"))
 Description: Fiber photometry processing and analysis with R.
