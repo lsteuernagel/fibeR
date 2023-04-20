@@ -28,7 +28,7 @@
 #'
 #'
 
-import_fibeR = function(input_path, sample_id = NULL,id_infererence="pathname", outputpath = tempdir(),matlab_path = "/beegfs/bin/matlab_2014b", export_full = FALSE,downsample_freq = 1000,channel_names = c("x465A","x405A"),verbose =TRUE){
+import_fibeR = function(input_path, sample_id = NULL,id_infererence="pathname", outputpath = tempdir(),matlab_path = "/beegfs/bin/matlab_2014b", export_full = FALSE,downsample_freq = 1000,channel_names = c("x465A","x405A"),return_cached =TRUE,verbose =TRUE){
 
   # check that input_path exists (will also be checked by export_tdt, just to be sure that we can define sample id etc. )
   if(!base::dir.exists(input_path)){stop("Cannot find path (input data)!")}
@@ -66,7 +66,7 @@ import_fibeR = function(input_path, sample_id = NULL,id_infererence="pathname", 
   # execute export_tdt
   export_tdt_result_file = export_tdt(path = input_path,
                                       id = sample_id,
-                                      return_cached = TRUE,
+                                      return_cached = return_cached,
                                       outputpath = outputpath,
                                       matlab_path = matlab_path,
                                       export_full = export_full,
@@ -79,6 +79,7 @@ import_fibeR = function(input_path, sample_id = NULL,id_infererence="pathname", 
     export_tdt_note_file = export_Notes(path = input_path,
                                         id = sample_id,
                                         outputpath = outputpath,
+                                        return_cached = return_cached,
                                         verbose=verbose)
     export_tdt_note_file
   },

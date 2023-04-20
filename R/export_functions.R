@@ -21,6 +21,7 @@
 #' @param tdt_lib_path only for debugging and custom usage. Defaults to NULL (use package system path).
 #' @param matlab_fun_path only for debugging and custom usage. Defaults to NULL (use package system path).
 #' @param verbose whether to print messages
+#' @param print_full_matlab_output whether to print the full matlab command line output
 #'
 #' @return the file name of the exported data as a character string
 #'
@@ -28,7 +29,8 @@
 #'
 #'
 
-export_tdt = function(path, id,return_cached = TRUE, outputpath = tempdir(),matlab_path = "/beegfs/bin/matlab_2014b" ,export_full = FALSE,downsample_freq = 1000,channel_names = c("x465A","x405A"),tdt_lib_path = NULL,matlab_fun_path =NULL,verbose =TRUE){
+export_tdt = function(path, id,return_cached = TRUE, outputpath = tempdir(),matlab_path = "/beegfs/bin/matlab_2014b" ,export_full = FALSE,downsample_freq = 1000,channel_names = c("x465A","x405A"),
+                      tdt_lib_path = NULL,matlab_fun_path =NULL,verbose =TRUE, print_full_matlab_output = FALSE){
 
   # Check input:
   if(export_full & outputpath == tempdir()){stop("Please specifiy a permanent outputpath when exporting the full data from Matlab!")}
@@ -82,6 +84,10 @@ export_tdt = function(path, id,return_cached = TRUE, outputpath = tempdir(),matl
       if(verbose){message("Completed export: ", output[12])}
     }else{
       if(verbose){message("Warning: Matlab export potentially failed!")}
+    }
+    if(print_full_matlab_output){
+      message("Full Matlab output: ")
+      message(output)
     }
   }
   return(outputfile)
