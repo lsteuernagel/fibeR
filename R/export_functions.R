@@ -58,8 +58,11 @@ export_tdt = function(path, id,return_cached = TRUE, outputpath = tempdir(),matl
   # paste channel names in correct format
   channels_matlab = paste0("{'",paste0(channel_names,collapse = "','"),"'}")
   # define file name of output
-  if(export_full){outputfile = paste0(outputpath,id,"_export.txt")}else{outputfile = paste0(outputpath,id,"_export_small.txt")}
-
+  if(export_full){
+    outputfile = paste0(outputpath,id,"_export.txt") # ,paste0(channel_names,collapse = "_")
+  }else{
+    outputfile = paste0(outputpath,id,"_f",downsample_freq,"_export_small.txt")
+  }
 
   if(return_cached & file.exists(outputfile)){
     if(verbose){message("export_tdt: Found existing export file for this id in outputpath. Not running Matlab. Set return_cached to FALSE to overwrite this behavior.")}

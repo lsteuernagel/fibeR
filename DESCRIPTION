@@ -9,4 +9,4 @@ Imports: methods, stats, grDevices, rlang, stringr, magrittr, dplyr, tidyr, sign
 Suggests: 
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.3

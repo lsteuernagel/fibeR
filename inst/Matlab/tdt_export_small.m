@@ -36,7 +36,7 @@ function tdt_export_small(inputpath,outputpath,sdkpath,id,names,N)
     time = time(1:nSamples2);
     data(:, 1) = double(time);
     % write to file
-    out = strcat(outputpath,id,'_export_small.txt');
+    out = strcat(outputpath,id,"_f",N,'_export_small.txt');
     dlmwrite(out, data, 'delimiter','\t','newline','pc','precision',13);
    % writematrix(data,out,'Delimiter','tab')
    % dlmwrite('/beegfs/scratch/bruening_scratch/lsteuernagel/data/fiberPhotometry/fromCorinna/040820BAU0000587_flat.txt', data, 'delimiter','\t','newline','pc','precision',13);

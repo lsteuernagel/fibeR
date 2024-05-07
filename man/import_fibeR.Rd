@@ -13,6 +13,7 @@ import_fibeR(
   export_full = FALSE,
   downsample_freq = 1000,
   channel_names = c("x465A", "x405A"),
+  return_cached = TRUE,
   verbose = TRUE
 )
 }
@@ -32,6 +33,8 @@ import_fibeR(
 \item{downsample_freq}{downsample in matlab by taking the mean over downsample_freq data points}
 
 \item{channel_names}{the channel names in the TDT binary files (required by Matlab function). Default to "x465A","x405A"}
+
+\item{return_cached}{Defaults to TRUE. If TRUE will not run Matlab export if a '_export.txt' file with the provided id already exists in outputpath}
 
 \item{verbose}{whether to print messages}
 }

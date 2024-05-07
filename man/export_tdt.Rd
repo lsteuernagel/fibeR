@@ -15,7 +15,8 @@ export_tdt(
   channel_names = c("x465A", "x405A"),
   tdt_lib_path = NULL,
   matlab_fun_path = NULL,
-  verbose = TRUE
+  verbose = TRUE,
+  print_full_matlab_output = FALSE
 )
 }
 \arguments{
@@ -40,6 +41,8 @@ export_tdt(
 \item{matlab_fun_path}{only for debugging and custom usage. Defaults to NULL (use package system path).}
 
 \item{verbose}{whether to print messages}
+
+\item{print_full_matlab_output}{whether to print the full matlab command line output}
 }
 \value{
 the file name of the exported data as a character string
