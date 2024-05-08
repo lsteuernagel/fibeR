@@ -116,8 +116,9 @@ export_tdt = function(path, id,return_cached = TRUE, outputpath = tempdir(),matl
 #'
 
 parseNotes = function(lines_from_notes,expected_id="",verbose=TRUE){
-  if(expected_id != gsub("Subject: ","",lines_from_notes[grepl("Subject",lines_from_notes)])){
-    if(verbose){message("Warning: Id in notes differs from expected id")}
+  detected_id = gsub("Subject: ","",lines_from_notes[grepl("Subject",lines_from_notes)])
+  if(expected_id != detected_id){
+    if(verbose){message("Warning: Id in notes(",detected_id,") differs from expected id (",expected_id,")")}
   }
   # extract start and stop time and convert to date
   start_time = gsub("Start: ","",stringr::str_extract(lines_from_notes[grepl("Start:",lines_from_notes)], "Start: [0-9]*:[0-9]*:[0-9]*[a-z]+ [0-9]*/[0-9]*/[0-9]*"))
@@ -171,7 +172,8 @@ export_Notes = function(path,id, outputpath = tempdir(),verbose=TRUE, return_cac
   path = gsub("//","/",paste0(path,"/"))
   # notes
   if(file.exists(paste0(c(path,"Notes.txt"),collapse = ""))){
-    notes_out_file =  paste0(c(outputpath,id,"_notes_parsed.txt"),collapse = "")
+    notes_out_file =  paste0(c(outputpath,"/",id,"_notes_parsed.txt"),collapse = "")
+    notes_out_file = gsub("//","/",notes_out_file)
     if(return_cached & file.exists(notes_out_file)){
       if(verbose){message("export_tdt: Found existing note file for this id in outputpath. Not overwriting. Set return_cached to FALSE to overwrite this behavior.")}
     }else{

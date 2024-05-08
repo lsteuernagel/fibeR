@@ -73,7 +73,7 @@ import_fibeR = function(input_path, sample_id = NULL,id_infererence="pathname", 
                                       downsample_freq = downsample_freq,
                                       channel_names = channel_names,
                                       verbose =verbose)
-
+  if(verbose){message("Exported tbk file to: ",export_tdt_result_file," using outputpath; ",outputpath)}
   # execute note export:
   export_tdt_note_file = tryCatch({
     export_tdt_note_file = export_Notes(path = input_path,
@@ -87,8 +87,9 @@ import_fibeR = function(input_path, sample_id = NULL,id_infererence="pathname", 
     #message("Error while writing notes : ",sample_id,". Skipping . Error message: ",cond)
     return("NONOTES")
   })
+  if(verbose){message("Exported note file to: ",export_tdt_note_file)}
   # import results into R
-  if(file.exists(export_tdt_note_file)){
+  if(file.exists(export_tdt_result_file)){
     raw.data = data.table::fread(export_tdt_result_file,header = FALSE,data.table = FALSE)
     colnames(raw.data) = c("time",channel_names)
     if(file.exists(export_tdt_note_file)){
